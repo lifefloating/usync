@@ -1,0 +1,42 @@
+{
+  "name": "usync-cli",
+  "version": "0.1.0",
+  "description": "Sync ClaudeCode/OpenCode/Codex/Gemini CLI settings and skills to GitHub Gist",
+  "type": "module",
+  "bin": {
+    "usync": "./dist/cli.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown src/cli.ts --format esm --target node20 --platform node --out-dir dist --clean --dts",
+    "dev": "tsx src/cli.ts",
+    "test": "vitest run",
+    "check": "tsc --noEmit",
+    "prepare": "npm run build"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "gist",
+    "sync",
+    "claudecode",
+    "opencode",
+    "codex",
+    "gemini-cli"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "commander": "^14.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.1",
+    "tsdown": "^0.20.3",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.2",
+    "vitest": "^4.0.18"
+  }
+}
