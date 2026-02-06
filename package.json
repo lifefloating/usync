@@ -4,7 +4,7 @@
   "description": "Sync ClaudeCode/OpenCode/Codex/Gemini CLI settings and skills to GitHub Gist",
   "type": "module",
   "bin": {
-    "usync": "./dist/cli.js"
+    "usync": "dist/cli.js"
   },
   "files": [
     "dist"
