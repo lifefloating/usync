@@ -4,13 +4,13 @@
   "description": "Sync ClaudeCode/OpenCode/Codex/Gemini CLI settings and skills to GitHub Gist",
   "type": "module",
   "bin": {
-    "usync": "./dist/cli.mjs"
+    "usync": "./dist/cli.js"
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsdown src/cli.ts --format esm --target node20 --platform node --out-dir dist --clean --dts",
+    "build": "tsdown src/cli.ts --format esm --target node20 --platform node --out-dir dist --clean --dts && node -e \"require('node:fs').copyFileSync('dist/cli.mjs','dist/cli.js')\"",
     "dev": "tsx src/cli.ts",
     "test": "vitest run",
     "check": "tsc --noEmit",
