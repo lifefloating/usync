@@ -48,6 +48,7 @@ export default defineCommand({
         outputRoot: args.outputRoot,
         force: args.force,
         allowRawFallback: !args.strictManifest,
+        onProgress: msg => s.message(msg),
       })
     }
     catch (err: any) {

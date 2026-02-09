@@ -5,41 +5,9 @@ import crypto from 'node:crypto'
 import fs from 'node:fs/promises'
 import { join, resolve } from 'pathe'
 import { ensureParentDir } from './fs.js'
-import { resolveTemplatePath } from './path.js'
+import { resolveTemplatePath, templatePathToOutputPath } from './path.js'
 
 export const MANIFEST_FILENAME = 'usync-manifest.v1.json'
-
-function templatePathToVisibleOutputPath(templatePath: string, provider: ManifestItem['provider']): string {
-  const scope = templatePath.startsWith('$HOME/')
-    ? 'home'
-    : templatePath.startsWith('$PROJECT/')
-      ? 'project'
-      : 'absolute'
-
-  const withoutToken = templatePath
-    .replace(/^\$HOME\//, '')
-    .replace(/^\$PROJECT\//, '')
-    .replace(/^\//, '')
-
-  const providerAlias
-    = provider === 'claudecode'
-      ? 'claude'
-      : provider === 'gemini-cli'
-        ? 'gemini'
-        : provider
-
-  let relative = withoutToken
-  if (provider === 'claudecode' && relative.startsWith('.claude/'))
-    relative = relative.slice('.claude/'.length)
-  if (provider === 'opencode' && relative.startsWith('.config/opencode/'))
-    relative = relative.slice('.config/opencode/'.length)
-  if (provider === 'gemini-cli' && relative.startsWith('.gemini/'))
-    relative = relative.slice('.gemini/'.length)
-  if (provider === 'codex' && relative.startsWith('.codex/'))
-    relative = relative.slice('.codex/'.length)
-
-  return join(scope, providerAlias, relative)
-}
 
 function sha256(buffer: Buffer | string): string {
   return crypto.createHash('sha256').update(buffer).digest('hex')
@@ -113,7 +81,7 @@ export async function uploadToGist(input: {
   description: string
   isPublic: boolean
   localItems: SyncItem[]
-  onProgress?: (current: number, total: number, label: string) => void
+  onProgress?: (message: string) => void
 }): Promise<{ gistId: string, plan: UploadPlan, created: boolean }> {
   let gist: GistResponse | null = null
   let created = false
@@ -127,29 +95,28 @@ export async function uploadToGist(input: {
   const nextManifest = buildManifest(input.localItems, remoteManifest)
 
   const filesPatch: Record<string, { content: string } | null> = {}
-  const changedCount = plan.changed.length + plan.deletedTemplatePaths.length + 1
-  let progress = 0
+  const total = plan.changed.length + plan.deletedTemplatePaths.length
 
-  for (const item of plan.changed) {
+  for (let i = 0; i < plan.changed.length; i++) {
+    const item = plan.changed[i]
+    input.onProgress?.(`Preparing ${i + 1}/${total}: ${item.relativeLabel}`)
     const gistFile = nextManifest.items[item.templatePath].gistFile
     filesPatch[gistFile] = { content: item.content.toString('base64') }
-    progress += 1
-    input.onProgress?.(progress, changedCount, `upload ${item.relativeLabel}`)
   }
 
-  for (const templatePath of plan.deletedTemplatePaths) {
+  for (let i = 0; i < plan.deletedTemplatePaths.length; i++) {
+    const templatePath = plan.deletedTemplatePaths[i]
+    input.onProgress?.(`Deleting ${plan.changed.length + i + 1}/${total}: ${templatePath}`)
     const oldGistFile = remoteManifest?.items[templatePath]?.gistFile
     if (oldGistFile)
       filesPatch[oldGistFile] = null
-    progress += 1
-    input.onProgress?.(progress, changedCount, `delete ${templatePath}`)
   }
 
   filesPatch[MANIFEST_FILENAME] = {
     content: JSON.stringify(nextManifest, null, 2),
   }
-  progress += 1
-  input.onProgress?.(progress, changedCount, 'upload manifest')
+
+  input.onProgress?.(`Pushing to gist...`)
 
   if (!gist) {
     const createdGist = await input.gistClient.createGist({
@@ -180,7 +147,7 @@ export async function downloadFromGist(input: {
   outputRoot?: string
   force?: boolean
   allowRawFallback?: boolean
-  onProgress?: (current: number, total: number, label: string) => void
+  onProgress?: (message: string) => void
 }): Promise<DownloadResult> {
   const gist = await input.gistClient.getGist(input.gistId)
   const manifest = parseManifestFromGist(gist)
@@ -192,12 +159,11 @@ export async function downloadFromGist(input: {
     const downloaded: string[] = []
     const skipped: string[] = []
     const entries = Object.entries(gist.files)
-    let progress = 0
-    for (const [fileName, gistFile] of entries) {
+    for (let i = 0; i < entries.length; i++) {
+      const [fileName, gistFile] = entries[i]
+      input.onProgress?.(`Downloading ${i + 1}/${entries.length}: ${fileName}`)
       if (!gistFile.content && !gistFile.raw_url) {
         skipped.push(`${fileName} (missing gist content)`)
-        progress += 1
-        input.onProgress?.(progress, entries.length, `skip ${fileName}`)
         continue
       }
 
@@ -206,8 +172,6 @@ export async function downloadFromGist(input: {
         const rawResp = await fetch(gistFile.raw_url)
         if (!rawResp.ok) {
           skipped.push(`${fileName} (failed to fetch raw gist file)`)
-          progress += 1
-          input.onProgress?.(progress, entries.length, `skip ${fileName}`)
           continue
         }
         content = await rawResp.text()
@@ -215,8 +179,6 @@ export async function downloadFromGist(input: {
 
       if (!content) {
         skipped.push(`${fileName} (missing gist content)`)
-        progress += 1
-        input.onProgress?.(progress, entries.length, `skip ${fileName}`)
         continue
       }
 
@@ -224,8 +186,6 @@ export async function downloadFromGist(input: {
       await ensureParentDir(targetPath)
       await fs.writeFile(targetPath, Buffer.from(content, 'utf8'))
       downloaded.push(targetPath)
-      progress += 1
-      input.onProgress?.(progress, entries.length, `download ${targetPath}`)
     }
 
     return { downloaded, skipped }
@@ -234,14 +194,13 @@ export async function downloadFromGist(input: {
   const downloaded: string[] = []
   const skipped: string[] = []
   const entries = Object.entries(manifest.items)
-  let progress = 0
 
-  for (const [templatePath, itemMeta] of entries) {
+  for (let i = 0; i < entries.length; i++) {
+    const [templatePath, itemMeta] = entries[i]
+    input.onProgress?.(`Restoring ${i + 1}/${entries.length}: ${templatePath}`)
     const gistFile = gist.files[itemMeta.gistFile]
     if (!gistFile) {
       skipped.push(`${templatePath} (missing gist content)`)
-      progress += 1
-      input.onProgress?.(progress, entries.length, `skip ${templatePath}`)
       continue
     }
 
@@ -250,16 +209,12 @@ export async function downloadFromGist(input: {
       const rawResp = await fetch(gistFile.raw_url)
       if (!rawResp.ok) {
         skipped.push(`${templatePath} (failed to fetch raw gist file)`)
-        progress += 1
-        input.onProgress?.(progress, entries.length, `skip ${templatePath}`)
         continue
       }
       encoded = await rawResp.text()
     }
     if (!encoded) {
       skipped.push(`${templatePath} (missing gist content)`)
-      progress += 1
-      input.onProgress?.(progress, entries.length, `skip ${templatePath}`)
       continue
     }
 
@@ -268,7 +223,7 @@ export async function downloadFromGist(input: {
     if (input.outputRoot) {
       targetPath = join(
         resolve(input.outputRoot),
-        templatePathToVisibleOutputPath(templatePath, itemMeta.provider),
+        templatePathToOutputPath(templatePath, itemMeta.provider),
       )
     }
     else {
@@ -280,8 +235,6 @@ export async function downloadFromGist(input: {
         const current = await fs.stat(targetPath)
         if (current.mtimeMs > Date.parse(gist.updated_at)) {
           skipped.push(`${targetPath} (local newer than gist)`)
-          progress += 1
-          input.onProgress?.(progress, entries.length, `skip ${targetPath}`)
           continue
         }
       }
@@ -293,8 +246,6 @@ export async function downloadFromGist(input: {
     await ensureParentDir(targetPath)
     await fs.writeFile(targetPath, content)
     downloaded.push(targetPath)
-    progress += 1
-    input.onProgress?.(progress, entries.length, `download ${targetPath}`)
   }
 
   return { downloaded, skipped }

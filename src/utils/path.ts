@@ -1,3 +1,4 @@
+import type { ProviderName } from '../types.js'
 import os from 'node:os'
 import { join, resolve, sep } from 'pathe'
 
@@ -31,12 +32,44 @@ export function resolveTemplatePath(templatePath: string, projectRoot: string): 
   return resolve(templatePath)
 }
 
+function parseTemplatePath(templatePath: string): { scope: string, rest: string } {
+  if (templatePath.startsWith(`${HOME_TOKEN}/`))
+    return { scope: 'home', rest: templatePath.slice(HOME_TOKEN.length + 1) }
+  if (templatePath.startsWith(`${PROJECT_TOKEN}/`))
+    return { scope: 'project', rest: templatePath.slice(PROJECT_TOKEN.length + 1) }
+  return { scope: 'absolute', rest: templatePath.replace(/^\/+/, '') }
+}
+
 export function templatePathToPortablePath(templatePath: string): string {
-  if (templatePath.startsWith(HOME_TOKEN)) {
-    return join('home', templatePath.slice(HOME_TOKEN.length))
+  const { scope, rest } = parseTemplatePath(templatePath)
+  return join(scope, rest)
+}
+
+const PROVIDER_PREFIXES: Record<ProviderName, string[]> = {
+  'claudecode': ['.claude/'],
+  'opencode': ['.config/opencode/'],
+  'codex': ['.codex/'],
+  'gemini-cli': ['.gemini/'],
+}
+
+const PROVIDER_ALIASES: Record<ProviderName, string> = {
+  'claudecode': 'claude',
+  'opencode': 'opencode',
+  'codex': 'codex',
+  'gemini-cli': 'gemini',
+}
+
+export function templatePathToOutputPath(templatePath: string, provider: ProviderName): string {
+  const { scope, rest } = parseTemplatePath(templatePath)
+  const alias = PROVIDER_ALIASES[provider]
+
+  let relative = rest
+  for (const prefix of PROVIDER_PREFIXES[provider]) {
+    if (relative.startsWith(prefix)) {
+      relative = relative.slice(prefix.length)
+      break
+    }
   }
-  if (templatePath.startsWith(PROJECT_TOKEN)) {
-    return join('project', templatePath.slice(PROJECT_TOKEN.length))
-  }
-  return join('absolute', templatePath.replace(/^\/+/, ''))
+
+  return join(scope, alias, relative)
 }

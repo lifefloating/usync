@@ -64,6 +64,7 @@ export default defineCommand({
           description: args.description,
           isPublic: args.public,
           localItems: items,
+          onProgress: msg => s.message(msg),
         })
       }
       catch (err: any) {
