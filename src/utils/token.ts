@@ -30,8 +30,7 @@ export function resolveToken(opts: TokenOptions): ResolvedToken {
 export function ensureToken(opts: TokenOptions): string {
   const resolved = resolveToken(opts)
   if (!resolved.token) {
-    consola.error('GitHub token not found. Create one at https://github.com/settings/tokens/new (scope: gist), then pass --token <PAT> or set GITHUB_TOKEN/GH_TOKEN.')
-    process.exit(1)
+    throw new Error('GitHub token not found. Create one at https://github.com/settings/tokens/new (scope: gist), then pass --token <PAT> or set GITHUB_TOKEN/GH_TOKEN.')
   }
   consola.info(`Using GitHub token from ${resolved.source}`)
   return resolved.token

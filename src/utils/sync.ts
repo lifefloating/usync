@@ -4,6 +4,7 @@ import { Buffer } from 'node:buffer'
 import crypto from 'node:crypto'
 import fs from 'node:fs/promises'
 import { join, resolve } from 'pathe'
+import { version } from '../../package.json'
 import { ensureParentDir } from './fs.js'
 import { resolveTemplatePath, templatePathToOutputPath } from './path.js'
 
@@ -70,7 +71,7 @@ function buildManifest(items: SyncItem[], previousManifest: SyncManifest | null)
     version: 1,
     createdAt: baseCreatedAt,
     updatedAt: now,
-    generator: 'usync-cli@0.1.0',
+    generator: `usync-cli@${version}`,
     items: mappedItems,
   }
 }

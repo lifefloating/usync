@@ -28,7 +28,16 @@ export default defineCommand({
   async run({ args }) {
     p.intro(cyan('usync upload'))
 
-    const token = ensureToken(args)
+    let token: string
+    try {
+      token = ensureToken(args)
+    }
+    catch (error) {
+      consola.error(error instanceof Error ? error.message : String(error))
+      process.exitCode = 1
+      return
+    }
+
     const projectRoot = resolve(args.cwd ?? process.cwd())
     const providers = resolveProviders(args.providers)
     const gistClient = new GistClient(token)
@@ -40,9 +49,9 @@ export default defineCommand({
     try {
       user = await gistClient.getAuthenticatedUser()
     }
-    catch (err: any) {
+    catch (error) {
       s.stop('Authentication failed')
-      consola.error(err.message || err)
+      consola.error(error instanceof Error ? error.message : String(error))
       process.exitCode = 1
       return
     }
@@ -67,9 +76,9 @@ export default defineCommand({
           onProgress: msg => s.message(msg),
         })
       }
-      catch (err: any) {
+      catch (error) {
         s.stop('Upload failed')
-        consola.error(err.message || err)
+        consola.error(error instanceof Error ? error.message : String(error))
         process.exitCode = 1
         return
       }
@@ -103,7 +112,7 @@ export default defineCommand({
     consola.info(`Watch interval: ${intervalMs / 1000}s`)
 
     const { createHash } = await import('node:crypto')
-    const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms))
+    const sleep = (ms: number): Promise<void> => new Promise(r => setTimeout(r, ms))
 
     let stop = false
     process.on('SIGINT', () => {

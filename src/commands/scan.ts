@@ -1,8 +1,8 @@
-import path from 'node:path'
 import process from 'node:process'
 import { defineCommand } from 'citty'
 import { cyan, gray, green } from 'colorette'
 import { consola } from 'consola'
+import { resolve } from 'pathe'
 import { resolveProviders } from '../providers.js'
 import { discoverSyncItems } from '../utils/discovery.js'
 
@@ -15,7 +15,7 @@ export default defineCommand({
     cwd: { type: 'string', description: 'Project root directory' },
   },
   async run({ args }) {
-    const projectRoot = path.resolve(args.cwd ?? process.cwd())
+    const projectRoot = resolve(args.cwd ?? process.cwd())
     const providers = resolveProviders(args.providers)
     const items = await discoverSyncItems(providers, projectRoot)
 

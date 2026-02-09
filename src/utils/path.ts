@@ -47,7 +47,7 @@ export function templatePathToPortablePath(templatePath: string): string {
 
 const PROVIDER_PREFIXES: Record<ProviderName, string[]> = {
   'claudecode': ['.claude/'],
-  'opencode': ['.config/opencode/'],
+  'opencode': ['.config/opencode/', 'AppData/Roaming/opencode/'],
   'codex': ['.codex/'],
   'gemini-cli': ['.gemini/'],
 }

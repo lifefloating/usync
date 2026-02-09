@@ -51,9 +51,9 @@ export default defineCommand({
         onProgress: msg => s.message(msg),
       })
     }
-    catch (err: any) {
+    catch (error) {
       s.stop('Download failed')
-      consola.error(err.message || err)
+      consola.error(error instanceof Error ? error.message : String(error))
       process.exitCode = 1
       return
     }

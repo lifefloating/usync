@@ -21,11 +21,13 @@ export default defineCommand({
     p.intro(cyan('usync init'))
 
     // Resolve token — interactive prompt if not provided
-    let token = resolveToken(args).token
+    const resolved = resolveToken(args)
+    let token = resolved.token
     if (!token) {
       if (!process.stdout.isTTY || process.env.CI) {
         consola.error('GitHub token not found. Pass --token <PAT> or set GITHUB_TOKEN/GH_TOKEN.')
-        process.exit(1)
+        process.exitCode = 1
+        return
       }
 
       const input = await p.password({
@@ -35,12 +37,14 @@ export default defineCommand({
             return 'Token is required'
         },
       })
-      if (p.isCancel(input))
-        process.exit(0)
+      if (p.isCancel(input)) {
+        p.outro('Cancelled.')
+        return
+      }
       token = input
     }
     else {
-      consola.info(`Using token from ${resolveToken(args).source}`)
+      consola.info(`Using token from ${resolved.source}`)
     }
 
     const gistClient = new GistClient(token)
@@ -48,8 +52,16 @@ export default defineCommand({
 
     // Verify token
     s.start('Verifying token...')
-    const user = await gistClient.getAuthenticatedUser()
-    s.stop(`Token verified — ${cyan(user.login)}`)
+    try {
+      const user = await gistClient.getAuthenticatedUser()
+      s.stop(`Token verified — ${cyan(user.login)}`)
+    }
+    catch (error) {
+      s.stop('Token verification failed')
+      consola.error(error instanceof Error ? error.message : String(error))
+      process.exitCode = 1
+      return
+    }
 
     // Resolve gist ID — interactive if not provided
     let gistId = args.gistId
@@ -61,37 +73,57 @@ export default defineCommand({
           { value: 'create', label: 'No, create a new one' },
         ],
       })
-      if (p.isCancel(choice))
-        process.exit(0)
+      if (p.isCancel(choice)) {
+        p.outro('Cancelled.')
+        return
+      }
 
       if (choice === 'existing') {
         const id = await p.text({
           message: 'Enter your Gist ID:',
           validate: v => !v ? 'Gist ID is required' : undefined,
         })
-        if (p.isCancel(id))
-          process.exit(0)
+        if (p.isCancel(id)) {
+          p.outro('Cancelled.')
+          return
+        }
         gistId = id
       }
     }
 
     if (gistId) {
       s.start('Verifying gist access...')
-      const gist = await gistClient.getGist(gistId)
-      s.stop(`Gist accessible: ${cyan(gist.id)}`)
-      consola.info(`Description: ${gist.description ?? 'no description'}`)
+      try {
+        const gist = await gistClient.getGist(gistId)
+        s.stop(`Gist accessible: ${cyan(gist.id)}`)
+        consola.info(`Description: ${gist.description ?? 'no description'}`)
+      }
+      catch (error) {
+        s.stop('Gist verification failed')
+        consola.error(error instanceof Error ? error.message : String(error))
+        process.exitCode = 1
+        return
+      }
     }
     else {
       s.start('Creating new gist...')
-      const gist = await gistClient.createGist({
-        description: args.description,
-        isPublic: args.public,
-        files: {
-          'usync-init.txt': { content: `initialized at ${new Date().toISOString()}` },
-        },
-      })
-      s.stop(`Created gist: ${cyan(gist.id)}`)
-      consola.info(`URL: https://gist.github.com/${gist.id}`)
+      try {
+        const gist = await gistClient.createGist({
+          description: args.description,
+          isPublic: args.public,
+          files: {
+            'usync-init.txt': { content: `initialized at ${new Date().toISOString()}` },
+          },
+        })
+        s.stop(`Created gist: ${cyan(gist.id)}`)
+        consola.info(`URL: https://gist.github.com/${gist.id}`)
+      }
+      catch (error) {
+        s.stop('Gist creation failed')
+        consola.error(error instanceof Error ? error.message : String(error))
+        process.exitCode = 1
+        return
+      }
     }
 
     p.outro('Init complete! Run `usync upload` to start syncing.')
