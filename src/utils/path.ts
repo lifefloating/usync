@@ -50,6 +50,8 @@ const PROVIDER_PREFIXES: Record<ProviderName, string[]> = {
   'opencode': ['.config/opencode/', 'AppData/Roaming/opencode/'],
   'codex': ['.codex/'],
   'gemini-cli': ['.gemini/'],
+  'kiro': ['.kiro/'],
+  'qoder': ['.config/qoder/'],
 }
 
 const PROVIDER_ALIASES: Record<ProviderName, string> = {
@@ -57,6 +59,8 @@ const PROVIDER_ALIASES: Record<ProviderName, string> = {
   'opencode': 'opencode',
   'codex': 'codex',
   'gemini-cli': 'gemini',
+  'kiro': 'kiro',
+  'qoder': 'qoder',
 }
 
 export function templatePathToOutputPath(templatePath: string, provider: ProviderName): string {

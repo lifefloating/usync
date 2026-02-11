@@ -51,6 +51,8 @@ export const PROVIDERS: ProviderDefinition[] = [
         t(join(projectRoot, '.claude', 'settings.json'), 'settings', false, 'project settings'),
         t(join(projectRoot, '.claude', 'settings.local.json'), 'settings', false, 'project local settings'),
         t(join(projectRoot, '.claude', 'skills'), 'skills', true, 'project skills'),
+        t(join(home, '.claude', 'teams'), 'teams', true, 'global teams'),
+        t(join(home, '.claude', 'tasks'), 'teams', true, 'global tasks'),
       ]
     },
   },
@@ -97,6 +99,26 @@ export const PROVIDERS: ProviderDefinition[] = [
         t(join(projectRoot, '.gemini', 'settings.json'), 'settings', false, 'project settings'),
         t(join(projectRoot, '.gemini', 'extensions'), 'other', true, 'project extensions'),
         t(join(projectRoot, '.gemini', 'skills'), 'skills', true, 'project skills'),
+      ]
+    },
+  },
+  {
+    name: 'kiro',
+    targets(projectRoot: string) {
+      return [
+        t(join(projectRoot, '.kiro', 'settings', 'mcp.json'), 'settings', false, 'project mcp config'),
+        t(join(projectRoot, '.kiro', 'steering'), 'skills', true, 'project steering'),
+      ]
+    },
+  },
+  {
+    name: 'qoder',
+    targets(projectRoot: string) {
+      return [
+        t(join(home, '.config', 'qoder', 'config.json'), 'settings', false, 'global config'),
+        t(join(home, '.config', 'qoder', 'skills'), 'skills', true, 'global skills'),
+        t(join(projectRoot, '.qoder', 'config.json'), 'settings', false, 'project config'),
+        t(join(projectRoot, '.qoder', 'skills'), 'skills', true, 'project skills'),
       ]
     },
   },

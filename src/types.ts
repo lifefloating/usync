@@ -1,8 +1,8 @@
 import type { Buffer } from 'node:buffer'
 
-export type ProviderName = 'claudecode' | 'opencode' | 'codex' | 'gemini-cli'
+export type ProviderName = 'claudecode' | 'opencode' | 'codex' | 'gemini-cli' | 'kiro' | 'qoder'
 
-export type ItemCategory = 'settings' | 'skills' | 'other'
+export type ItemCategory = 'settings' | 'skills' | 'teams' | 'other'
 
 export interface SyncItem {
   provider: ProviderName

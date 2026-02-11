@@ -6,13 +6,14 @@ const main = defineCommand({
   meta: {
     name: 'usync',
     version,
-    description: 'Sync ClaudeCode/OpenCode/Codex/Gemini CLI configs and skills to GitHub Gist',
+    description: 'Sync AI coding tool configs and skills to GitHub Gist',
   },
   subCommands: {
     init: () => import('./commands/init.js').then(m => m.default),
     scan: () => import('./commands/scan.js').then(m => m.default),
     upload: () => import('./commands/upload.js').then(m => m.default),
     download: () => import('./commands/download.js').then(m => m.default),
+    migrate: () => import('./commands/migrate.js').then(m => m.default),
   },
 })
 
