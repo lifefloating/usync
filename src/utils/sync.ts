@@ -244,9 +244,9 @@ export async function downloadFromGist(input: {
 
     if (!input.force) {
       try {
-        const current = await fs.stat(targetPath)
-        if (current.mtimeMs > Date.parse(gist.updated_at)) {
-          skipped.push(`${targetPath} (local newer than gist)`)
+        const localContent = await fs.readFile(targetPath)
+        if (sha256(localContent) === itemMeta.hash) {
+          skipped.push(`${targetPath} (unchanged)`)
           continue
         }
       }

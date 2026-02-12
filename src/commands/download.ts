@@ -18,7 +18,7 @@ export default defineCommand({
     tokenEnv: { type: 'string', default: 'GITHUB_TOKEN', description: 'Token env var name' },
     cwd: { type: 'string', description: 'Project root directory' },
     outputRoot: { type: 'string', description: 'Override restore destination (sandbox path)' },
-    force: { type: 'boolean', default: false, description: 'Overwrite even if local is newer' },
+    force: { type: 'boolean', default: false, description: 'Overwrite even if content is identical' },
     strictManifest: { type: 'boolean', default: false, description: 'Require usync manifest' },
   },
   async run({ args }) {
