@@ -5,7 +5,7 @@ Upload discovered config files to a GitHub Gist. Supports incremental sync and w
 ## Usage
 
 ```bash
-usync upload [options]
+usync-cli upload [options]
 ```
 
 ## Options
@@ -32,10 +32,10 @@ Upload uses a manifest (`usync-manifest.v1.json`) stored in the Gist to track fi
 
 ## Watch Mode
 
-With `--watch`, usync polls for local changes and auto-uploads:
+With `--watch`, usync-cli polls for local changes and auto-uploads:
 
 ```bash
-usync upload --gist-id <id> --watch --interval 30
+usync-cli upload --gist-id <id> --watch --interval 30
 ```
 
 - Computes SHA-256 fingerprint of all discovered files
@@ -47,14 +47,14 @@ usync upload --gist-id <id> --watch --interval 30
 
 ```bash
 # Upload to existing Gist
-usync upload --gist-id abc123
+usync-cli upload --gist-id abc123
 
 # Create new Gist and upload
-usync upload
+usync-cli upload
 
 # Upload only ClaudeCode configs
-usync upload --gist-id abc123 --providers claudecode
+usync-cli upload --gist-id abc123 --providers claudecode
 
 # Watch mode with 30s interval
-usync upload --gist-id abc123 --watch --interval 30
+usync-cli upload --gist-id abc123 --watch --interval 30
 ```

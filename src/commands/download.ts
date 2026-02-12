@@ -22,7 +22,7 @@ export default defineCommand({
     strictManifest: { type: 'boolean', default: false, description: 'Require usync manifest' },
   },
   async run({ args }) {
-    p.intro(cyan('usync download'))
+    p.intro(cyan('usync-cli download'))
 
     const projectRoot = resolve(args.cwd ?? process.cwd())
     const resolved = resolveToken(args)

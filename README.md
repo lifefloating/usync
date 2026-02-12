@@ -13,7 +13,7 @@ Sync ClaudeCode / OpenCode / Codex / Gemini CLI settings + skills to GitHub Gist
 - Built-in `init` command validates PAT and verifies/creates gist.
 - Excludes obvious sensitive files by default (`.env*`, `.pem`, `.key`, `.p12`) and system noise (`.DS_Store`).
 - Optional auto sync loop: `upload --watch` polls local changes and pushes incrementally.
-- TypeScript implementation, runnable via `npx` or `bunx` after build/publish.
+- TypeScript implementation, runnable via `npx usync-cli` or `bunx usync-cli` after build/publish.
 
 ### Supported sources (auto-discovery)
 
@@ -42,25 +42,25 @@ npm run build
 
 ```bash
 # 1) Scan discovered files
-npx usync scan
+npx usync-cli scan
 
 # 1.1) Validate token and gist access
-npx usync init --token <GITHUB_PAT> --gist-id <GIST_ID>
+npx usync-cli init --token <GITHUB_PAT> --gist-id <GIST_ID>
 
 # 2) Upload to existing gist
-npx usync upload --token <GITHUB_PAT> --gist-id <GIST_ID>
+npx usync-cli upload --token <GITHUB_PAT> --gist-id <GIST_ID>
 
 # 3) Create new gist and upload
-npx usync upload --token <GITHUB_PAT> --description cloudSettings --public
+npx usync-cli upload --token <GITHUB_PAT> --description cloudSettings --public
 
 # 4) Download and restore to real target paths
-npx usync download --token <GITHUB_PAT> --gist-id <GIST_ID>
+npx usync-cli download --token <GITHUB_PAT> --gist-id <GIST_ID>
 
 # 5) Download to sandbox test directory
-npx usync download --token <GITHUB_PAT> --gist-id <GIST_ID> --output-root /path/to/settingsTest
+npx usync-cli download --token <GITHUB_PAT> --gist-id <GIST_ID> --output-root /path/to/settingsTest
 
 # 6) Auto-upload when local files change
-npx usync upload --token <GITHUB_PAT> --gist-id <GIST_ID> --watch --interval 15
+npx usync-cli upload --token <GITHUB_PAT> --gist-id <GIST_ID> --watch --interval 15
 ```
 
 `scan` does not require PAT or Gist ID.

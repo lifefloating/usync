@@ -36,25 +36,25 @@ npm run build
 
 ```bash
 # 1) 扫描本地可同步文件
-npx usync scan
+npx usync-cli scan
 
 # 1.1) 验证 token 与 gist 访问
-npx usync init --token <GITHUB_PAT> --gist-id <GIST_ID>
+npx usync-cli init --token <GITHUB_PAT> --gist-id <GIST_ID>
 
 # 2) 上传到已有 gist
-npx usync upload --token <GITHUB_PAT> --gist-id <GIST_ID>
+npx usync-cli upload --token <GITHUB_PAT> --gist-id <GIST_ID>
 
 # 3) 创建新 gist 后上传
-npx usync upload --token <GITHUB_PAT> --description cloudSettings --public
+npx usync-cli upload --token <GITHUB_PAT> --description cloudSettings --public
 
 # 4) 下载并恢复到默认路径
-npx usync download --token <GITHUB_PAT> --gist-id <GIST_ID>
+npx usync-cli download --token <GITHUB_PAT> --gist-id <GIST_ID>
 
 # 5) 下载到测试目录
-npx usync download --token <GITHUB_PAT> --gist-id <GIST_ID> --output-root /path/to/settingsTest
+npx usync-cli download --token <GITHUB_PAT> --gist-id <GIST_ID> --output-root /path/to/settingsTest
 
 # 6) 本地有变化时自动上传
-npx usync upload --token <GITHUB_PAT> --gist-id <GIST_ID> --watch --interval 15
+npx usync-cli upload --token <GITHUB_PAT> --gist-id <GIST_ID> --watch --interval 15
 ```
 
 `scan` 不需要 PAT 和 Gist ID。

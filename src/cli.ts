@@ -4,7 +4,7 @@ import { version } from '../package.json'
 
 const main = defineCommand({
   meta: {
-    name: 'usync',
+    name: 'usync-cli',
     version,
     description: 'Sync ClaudeCode/OpenCode/Codex/Gemini CLI configs and skills to GitHub Gist',
   },

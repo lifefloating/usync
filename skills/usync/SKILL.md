@@ -19,22 +19,22 @@ Sync configurations and skills from ClaudeCode, OpenCode, Codex, and Gemini CLI 
 
 ```bash
 # Install
-pnpm add -g usync
+pnpm add -g usync-cli
 
 # Initialize — verify token and create a Gist
-usync init
+usync-cli init
 
 # Scan — list all discovered config files
-usync scan
+usync-cli scan
 
 # Upload — sync local configs to Gist
-usync upload --gist-id <id>
+usync-cli upload --gist-id <id>
 
 # Download — restore configs from Gist
-usync download --gist-id <id>
+usync-cli download --gist-id <id>
 
 # Watch mode — auto-upload on changes
-usync upload --gist-id <id> --watch
+usync-cli upload --gist-id <id> --watch
 ```
 
 ## Supported Providers
@@ -50,10 +50,10 @@ usync upload --gist-id <id> --watch
 
 | Command | Description | Reference |
 |---------|-------------|-----------|
-| `usync init` | Verify token, create or validate Gist | [command-init](references/command-init.md) |
-| `usync scan` | List discovered local config files | [command-scan](references/command-scan.md) |
-| `usync upload` | Upload configs to GitHub Gist | [command-upload](references/command-upload.md) |
-| `usync download` | Download and restore configs from Gist | [command-download](references/command-download.md) |
+| `usync-cli init` | Verify token, create or validate Gist | [command-init](references/command-init.md) |
+| `usync-cli scan` | List discovered local config files | [command-scan](references/command-scan.md) |
+| `usync-cli upload` | Upload configs to GitHub Gist | [command-upload](references/command-upload.md) |
+| `usync-cli download` | Download and restore configs from Gist | [command-download](references/command-download.md) |
 
 ## References
 
@@ -65,7 +65,7 @@ usync upload --gist-id <id> --watch
 
 ## Token Setup
 
-usync requires a GitHub Personal Access Token with `gist` scope:
+usync-cli requires a GitHub Personal Access Token with `gist` scope:
 
 1. Go to https://github.com/settings/tokens/new
 2. Select scope: **gist**
@@ -85,30 +85,30 @@ Token resolution order:
 export GITHUB_TOKEN=ghp_xxx
 
 # Initialize and create a new Gist
-usync init
+usync-cli init
 
 # Upload all configs
-usync upload --gist-id <id-from-init>
+usync-cli upload --gist-id <id-from-init>
 ```
 
 ### Restore on new machine
 
 ```bash
 export GITHUB_TOKEN=ghp_xxx
-usync download --gist-id <id>
+usync-cli download --gist-id <id>
 ```
 
 ### Watch mode for continuous sync
 
 ```bash
-usync upload --gist-id <id> --watch --interval 30
+usync-cli upload --gist-id <id> --watch --interval 30
 ```
 
 ### Filter specific providers
 
 ```bash
-usync scan --providers claudecode,opencode
-usync upload --gist-id <id> --providers claudecode
+usync-cli scan --providers claudecode,opencode
+usync-cli upload --gist-id <id> --providers claudecode
 ```
 
 ## Security

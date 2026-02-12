@@ -5,7 +5,7 @@ Validate GitHub token and Gist access, optionally create a new Gist.
 ## Usage
 
 ```bash
-usync init [options]
+usync-cli init [options]
 ```
 
 ## Options
@@ -33,14 +33,14 @@ In CI/non-TTY environments, all values must be provided via flags or env vars.
 
 ```bash
 # Interactive setup
-usync init
+usync-cli init
 
 # Verify existing Gist
-usync init --gist-id abc123
+usync-cli init --gist-id abc123
 
 # Create new private Gist with custom description
-usync init --description "my-ai-configs"
+usync-cli init --description "my-ai-configs"
 
 # Create public Gist
-usync init --public
+usync-cli init --public
 ```

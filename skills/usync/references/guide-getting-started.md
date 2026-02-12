@@ -9,10 +9,10 @@
 
 ```bash
 # Global install
-pnpm add -g usync
+pnpm add -g usync-cli
 
 # Or use npx
-npx usync
+npx usync-cli
 ```
 
 ## Create a GitHub Token
@@ -29,34 +29,34 @@ npx usync
 export GITHUB_TOKEN=ghp_xxxxxxxxxxxx
 
 # Option 2: Pass directly (not recommended for scripts)
-usync init --token ghp_xxxxxxxxxxxx
+usync-cli init --token ghp_xxxxxxxxxxxx
 ```
 
 ## First Sync
 
 ```bash
 # 1. Initialize — creates a new Gist
-usync init
+usync-cli init
 # → Outputs Gist ID (save this!)
 
 # 2. Scan — verify what files will be synced
-usync scan
+usync-cli scan
 
 # 3. Upload — sync to Gist
-usync upload --gist-id <id>
+usync-cli upload --gist-id <id>
 ```
 
 ## Restore on New Machine
 
 ```bash
 export GITHUB_TOKEN=ghp_xxxxxxxxxxxx
-usync download --gist-id <id>
+usync-cli download --gist-id <id>
 ```
 
 ## Continuous Sync
 
 ```bash
-usync upload --gist-id <id> --watch
+usync-cli upload --gist-id <id> --watch
 ```
 
 ## Provider Filtering
@@ -64,5 +64,5 @@ usync upload --gist-id <id> --watch
 Only sync specific tools:
 
 ```bash
-usync upload --gist-id <id> --providers claudecode,opencode
+usync-cli upload --gist-id <id> --providers claudecode,opencode
 ```

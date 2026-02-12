@@ -71,7 +71,7 @@ function buildManifest(items: SyncItem[], previousManifest: SyncManifest | null)
     version: 1,
     createdAt: baseCreatedAt,
     updatedAt: now,
-    generator: `usync@${version}`,
+    generator: `usync-cli@${version}`,
     items: mappedItems,
   }
 }

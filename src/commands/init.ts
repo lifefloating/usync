@@ -18,7 +18,7 @@ export default defineCommand({
     public: { type: 'boolean', default: false, description: 'Create public gist' },
   },
   async run({ args }) {
-    p.intro(cyan('usync init'))
+    p.intro(cyan('usync-cli init'))
 
     // Resolve token — interactive prompt if not provided
     const resolved = resolveToken(args)
@@ -126,6 +126,6 @@ export default defineCommand({
       }
     }
 
-    p.outro('Init complete! Run `usync upload` to start syncing.')
+    p.outro('Init complete! Run `usync-cli upload` to start syncing.')
   },
 })

@@ -5,7 +5,7 @@ Download and restore synced files from a GitHub Gist.
 ## Usage
 
 ```bash
-usync download --gist-id <id> [options]
+usync-cli download --gist-id <id> [options]
 ```
 
 ## Options
@@ -41,14 +41,14 @@ Template paths in the manifest are resolved:
 
 ```bash
 # Download to original locations
-usync download --gist-id abc123
+usync-cli download --gist-id abc123
 
 # Download to sandbox directory
-usync download --gist-id abc123 --output-root ./sandbox
+usync-cli download --gist-id abc123 --output-root ./sandbox
 
 # Force overwrite local files
-usync download --gist-id abc123 --force
+usync-cli download --gist-id abc123 --force
 
 # Anonymous access (public Gist)
-usync download --gist-id abc123
+usync-cli download --gist-id abc123
 ```

@@ -26,7 +26,7 @@ export default defineCommand({
     interval: { type: 'string', default: '15', description: 'Watch interval in seconds' },
   },
   async run({ args }) {
-    p.intro(cyan('usync upload'))
+    p.intro(cyan('usync-cli upload'))
 
     let token: string
     try {
