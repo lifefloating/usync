@@ -71,7 +71,7 @@ function buildManifest(items: SyncItem[], previousManifest: SyncManifest | null)
     version: 1,
     createdAt: baseCreatedAt,
     updatedAt: now,
-    generator: `usync-cli@${version}`,
+    generator: `usync@${version}`,
     items: mappedItems,
   }
 }
@@ -151,12 +151,23 @@ export async function downloadFromGist(input: {
   onProgress?: (message: string) => void
 }): Promise<DownloadResult> {
   const gist = await input.gistClient.getGist(input.gistId)
+
+  // GitHub API truncates file content for large gists — fetch manifest via raw_url if needed
+  const manifestFile = gist.files[MANIFEST_FILENAME]
+  if (manifestFile && !manifestFile.content && manifestFile.raw_url) {
+    const rawResp = await fetch(manifestFile.raw_url)
+    if (rawResp.ok) {
+      manifestFile.content = await rawResp.text()
+    }
+  }
+
   const manifest = parseManifestFromGist(gist)
   if (!manifest) {
-    if (!input.allowRawFallback || !input.outputRoot) {
+    if (!input.allowRawFallback) {
       throw new Error(`Manifest file ${MANIFEST_FILENAME} not found in gist ${input.gistId}`)
     }
 
+    const rawOutputRoot = input.outputRoot ? resolve(input.outputRoot) : input.projectRoot
     const downloaded: string[] = []
     const skipped: string[] = []
     const entries = Object.entries(gist.files)
@@ -183,7 +194,7 @@ export async function downloadFromGist(input: {
         continue
       }
 
-      const targetPath = join(resolve(input.outputRoot), 'raw-gist', fileName)
+      const targetPath = join(rawOutputRoot, 'raw-gist', fileName)
       await ensureParentDir(targetPath)
       await fs.writeFile(targetPath, Buffer.from(content, 'utf8'))
       downloaded.push(targetPath)

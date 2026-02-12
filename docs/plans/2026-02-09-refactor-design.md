@@ -1,8 +1,8 @@
-# usync-cli: Refactor Design
+# usync: Refactor Design
 
 ## Goal
 
-Refactor usync-cli to follow open-source CLI patterns: modern unjs ecosystem tooling, interactive prompts, cleaner code architecture, and standardized engineering practices.
+Refactor usync to follow open-source CLI patterns: modern unjs ecosystem tooling, interactive prompts, cleaner code architecture, and standardized engineering practices.
 
 ## Constraints
 

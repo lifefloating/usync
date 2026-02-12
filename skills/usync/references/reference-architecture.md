@@ -20,7 +20,7 @@ The sync manifest (`usync-manifest.v1.json`) is stored in the Gist alongside fil
   "version": 1,
   "createdAt": "2025-01-01T00:00:00.000Z",
   "updatedAt": "2025-01-02T00:00:00.000Z",
-  "generator": "usync-cli@0.1.0",
+  "generator": "usync@0.1.0",
   "items": {
     "$HOME/.claude/settings.json": {
       "provider": "claudecode",

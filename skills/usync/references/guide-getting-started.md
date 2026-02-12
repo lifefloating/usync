@@ -9,10 +9,10 @@
 
 ```bash
 # Global install
-pnpm add -g usync-cli
+pnpm add -g usync
 
 # Or use npx
-npx usync-cli
+npx usync
 ```
 
 ## Create a GitHub Token

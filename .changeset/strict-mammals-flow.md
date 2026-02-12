@@ -1,8 +1,8 @@
 ---
-"usync-cli": major
+"usync": major
 ---
 
-Initial release of usync-cli
+Initial release of usync
 
 - Support syncing settings and skills for ClaudeCode, OpenCode, Codex, and Gemini CLI to GitHub Gist
 - Commands: `scan`, `init`, `upload`, `download`

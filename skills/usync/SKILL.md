@@ -19,7 +19,7 @@ Sync configurations and skills from ClaudeCode, OpenCode, Codex, and Gemini CLI 
 
 ```bash
 # Install
-pnpm add -g usync-cli
+pnpm add -g usync
 
 # Initialize — verify token and create a Gist
 usync init
