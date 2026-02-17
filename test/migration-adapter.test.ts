@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os'
 import { readMigrationData, writeMigrationData } from '../src/utils/migration-adapter.js'
 import type { ProviderName } from '../src/types.js'
 
-const ALL_PROVIDERS: ProviderName[] = ['claudecode', 'opencode', 'codex', 'gemini-cli', 'kiro', 'qoder']
+const ALL_PROVIDERS: ProviderName[] = ['claudecode', 'opencode', 'codex', 'gemini-cli', 'kiro', 'qoder', 'cursor']
 
 let testDir: string
 
@@ -142,6 +142,16 @@ describe('readMigrationData - skills read paths (project scope)', () => {
     expect(data.skills[0]).toEqual({ relativePath: 'inst.md', content: '# Instructions' })
   })
 
+  it('reads .cursor/rules/ for cursor', async () => {
+    const root = join(testDir, 'cur-read')
+    await fs.mkdir(join(root, '.cursor', 'rules'), { recursive: true })
+    await fs.writeFile(join(root, '.cursor', 'rules', 'style.md'), '# Style Guide', 'utf-8')
+
+    const data = await readMigrationData('cursor', 'project', root)
+    expect(data.skills).toHaveLength(1)
+    expect(data.skills[0]).toEqual({ relativePath: 'style.md', content: '# Style Guide' })
+  })
+
   it('returns empty skills when directory does not exist', async () => {
     const root = join(testDir, 'empty-read')
     await fs.mkdir(root, { recursive: true })
@@ -152,10 +162,10 @@ describe('readMigrationData - skills read paths (project scope)', () => {
 })
 
 describe('readMigrationData - MCP config read (project scope)', () => {
-  it('reads MCP from .claude/settings.json for claudecode', async () => {
+  it('reads MCP from .mcp.json for claudecode', async () => {
     const root = join(testDir, 'cc-mcp')
-    await fs.mkdir(join(root, '.claude'), { recursive: true })
-    await fs.writeFile(join(root, '.claude', 'settings.json'), JSON.stringify({
+    await fs.mkdir(root, { recursive: true })
+    await fs.writeFile(join(root, '.mcp.json'), JSON.stringify({
       mcpServers: { 'test-server': { command: 'npx', args: ['--flag'] } },
     }), 'utf-8')
 
@@ -165,11 +175,11 @@ describe('readMigrationData - MCP config read (project scope)', () => {
     expect(data.mcpServers[0].command).toBe('npx')
   })
 
-  it('reads MCP from opencode.json with mcp.servers path for opencode', async () => {
+  it('reads MCP from opencode.json with mcp.<name> path for opencode', async () => {
     const root = join(testDir, 'oc-mcp')
     await fs.mkdir(root, { recursive: true })
     await fs.writeFile(join(root, 'opencode.json'), JSON.stringify({
-      mcp: { servers: { 'oc-server': { command: 'node', args: ['srv.js'] } } },
+      mcp: { 'oc-server': { type: 'local', command: ['node', 'srv.js'] } },
     }), 'utf-8')
 
     const data = await readMigrationData('opencode', 'project', root)
@@ -231,6 +241,15 @@ describe('writeMigrationData - skills write paths (project scope)', () => {
 
     await writeMigrationData('gemini-cli', 'project', { mcpServers: [], skills: sampleSkills }, root)
     const content = await fs.readFile(join(root, '.gemini', 'skills', 'test.md'), 'utf-8')
+    expect(content).toBe('# Test Content')
+  })
+
+  it('writes skills to .cursor/rules/ for cursor', async () => {
+    const root = join(testDir, 'cur-write')
+    await fs.mkdir(root, { recursive: true })
+
+    await writeMigrationData('cursor', 'project', { mcpServers: [], skills: sampleSkills }, root)
+    const content = await fs.readFile(join(root, '.cursor', 'rules', 'test.md'), 'utf-8')
     expect(content).toBe('# Test Content')
   })
 })

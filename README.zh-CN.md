@@ -1,6 +1,6 @@
 # usync（中文）
 
-同步 ClaudeCode / OpenCode / Codex / Gemini CLI 的配置与 skills 到 GitHub Gist。
+同步 ClaudeCode / OpenCode / Codex / Gemini CLI / Kiro / Qoder / Cursor 的配置与 skills 到 GitHub Gist。
 
 ## 功能
 
@@ -11,13 +11,17 @@
 - 内置 `init`：验证 PAT 并校验/创建 Gist。
 - 默认过滤明显敏感文件（`.env*`、`.pem`、`.key`、`.p12`）和系统噪音（`.DS_Store`）。
 - 支持可选自动同步：`upload --watch` 轮询本地变化并增量上传。
+- 跨工具迁移：自动格式转换、冲突处理、`mcp-remote` 桥接检测。
 
 ## 自动发现路径
 
-- **ClaudeCode**：`~/.claude/settings.json`、`~/.claude/settings.local.json`、`~/.claude/skills`，以及项目内 `.claude/*`
+- **ClaudeCode**：`~/.claude.json`（全局 MCP）、`~/.claude/settings.json`、`~/.claude/skills`，以及项目内 `.mcp.json`、`.claude/*`
 - **OpenCode**：`~/.config/opencode/opencode.json(.jsonc)`、`~/.config/opencode/skills`，以及项目内 `opencode.json(.jsonc)`、`.opencode/skills`
-- **Codex**：`~/.codex/config.json`、`~/.codex/settings.json`、`~/.codex/skills`，以及项目内 `.codex/*`
+- **Codex**：`~/.codex/config.toml`、`~/.codex/skills`，以及项目内 `.codex/*`
 - **Gemini CLI**：`~/.gemini/settings.json`、`~/.gemini/extensions`、`~/.gemini/skills`，以及项目内 `.gemini/*`
+- **Kiro**：`~/.kiro/settings/mcp.json`、`~/.kiro/skills`，以及项目内 `.kiro/settings/mcp.json`、`.kiro/steering`
+- **Qoder**：`~/.qoder/mcp.json`、`~/.qoder/skills`，以及项目内 `.qoder/mcp.json`、`.qoder/skills`
+- **Cursor**：`~/.cursor/mcp.json`、`~/.cursor/rules`，以及项目内 `.cursor/mcp.json`、`.cursor/rules`
 
 ## 安装与构建
 
@@ -59,6 +63,50 @@ npx usync upload --token <GITHUB_PAT> --gist-id <GIST_ID> --watch --interval 15
 
 `scan` 不需要 PAT 和 Gist ID。
 `upload/download/init` 需要 PAT，且 `upload/download` 还需要目标 Gist ID。
+
+### 迁移（Migrate）
+
+在 AI 编码工具之间迁移 MCP 配置和 skills。
+
+```bash
+# 从 Claude Code 迁移到 Kiro（默认全局范围）
+npx usync migrate --from claudecode --to kiro
+
+# 从 Codex 迁移到 Claude Code
+npx usync migrate --from codex --to claudecode
+
+# 预览模式：只显示变更，不写入文件
+npx usync migrate --from kiro --to claudecode --dry-run
+
+# 跳过确认提示（冲突默认跳过）
+npx usync migrate --from claudecode --to kiro --yes
+
+# 强制覆盖已有文件
+npx usync migrate --from codex --to kiro --yes --overwrite
+
+# 迁移项目级配置
+npx usync migrate --from claudecode --to kiro --scope project
+```
+
+支持的工具：`claudecode`、`opencode`、`codex`、`gemini-cli`、`kiro`、`qoder`、`cursor`
+
+参数：
+- `--from` — 源工具
+- `--to` — 目标工具
+- `--scope` — `global`（默认）或 `project`
+- `--dry-run` — 预览变更，不写入文件
+- `--yes` — 跳过确认提示（冲突默认跳过，除非同时指定 `--overwrite`）
+- `--overwrite` — 强制覆盖目标已有文件（默认跳过冲突）
+- `--cwd` — 项目根目录（用于 project 范围）
+
+#### 迁移特性
+
+- **格式自动转换**：MCP 配置在不同工具格式间自动转换（JSON `mcpServers`、OpenCode `mcp.<name>`、Codex TOML `[mcp_servers]`）。
+- **URL transport**：远程 MCP 服务器（HTTP/SSE）按目标工具格式序列化 — Claude Code 用 `type: "http"`，Gemini CLI 用 `httpUrl`，Cursor 用 `type: "sse"`，OpenCode 用 `type: "remote"`。
+- **mcp-remote 检测**：使用 `mcp-remote` 做桥接的 stdio 服务器（如 `npx mcp-remote@latest https://...`）会自动转换为原生 URL transport。`--header` 参数会被提取并写入目标配置的 `headers` 字段。
+- **Skills 格式转换**：结构化 skills（`SKILL.md` + `references/`）会自动转换为扁平格式（适用于 Cursor、Gemini CLI、Kiro 项目 steering），反之亦然。
+- **系统 skills 过滤**：工具内部目录（如 Codex `.system/`）在迁移时自动排除。
+- **冲突处理**：目标已有文件默认跳过。使用 `--overwrite` 强制覆盖，或交互模式下逐个选择。
 
 说明：若目标 gist 还没有 `usync` 的 manifest，`download` 会回退到原始 gist 文件下载到 `<output-root>/raw-gist/`。可加 `--strict-manifest` 禁止回退。
 

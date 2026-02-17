@@ -5,7 +5,7 @@ import { parseMCPFromProvider, serializeMCPForProvider } from '../src/utils/mcp.
 import type { CanonicalMCPServer } from '../src/utils/mcp.js'
 import type { ProviderName } from '../src/types.js'
 
-const ALL_PROVIDERS: ProviderName[] = ['claudecode', 'opencode', 'codex', 'gemini-cli', 'kiro', 'qoder']
+const ALL_PROVIDERS: ProviderName[] = ['claudecode', 'opencode', 'codex', 'gemini-cli', 'kiro', 'qoder', 'cursor']
 
 /**
  * Generator for a valid server name: non-empty alphanumeric + hyphens,
@@ -80,6 +80,9 @@ function normalizeServer(s: CanonicalMCPServer): CanonicalMCPServer {
     base.command = s.command ?? ''
     base.args = [...(s.args ?? [])]
   }
+  if (s.headers && Object.keys(s.headers).length > 0) {
+    base.headers = { ...s.headers }
+  }
   if (s.env && Object.keys(s.env).length > 0) {
     base.env = { ...s.env }
   }
@@ -153,27 +156,41 @@ describe('MCP extra fields property tests', () => {
     const serversObj: Record<string, Record<string, unknown>> = {}
     for (let i = 0; i < servers.length; i++) {
       const s = servers[i]
-      const entry: Record<string, unknown> = {
-        command: s.command ?? '',
-        args: s.args ?? [],
-        ...extraFieldsPerServer[i],
+      if (provider === 'opencode') {
+        // OpenCode format: type, command (array), environment
+        const entry: Record<string, unknown> = {
+          type: 'local',
+          command: [s.command ?? '', ...(s.args ?? [])],
+          ...extraFieldsPerServer[i],
+        }
+        if (s.env && Object.keys(s.env).length > 0) {
+          entry.environment = s.env
+        }
+        serversObj[s.name] = entry
       }
-      if (s.env && Object.keys(s.env).length > 0) {
-        entry.env = s.env
+      else {
+        const entry: Record<string, unknown> = {
+          command: s.command ?? '',
+          args: s.args ?? [],
+          ...extraFieldsPerServer[i],
+        }
+        if (s.env && Object.keys(s.env).length > 0) {
+          entry.env = s.env
+        }
+        serversObj[s.name] = entry
       }
-      serversObj[s.name] = entry
     }
 
     if (provider === 'codex') {
       return stringifyTOML({ mcp_servers: serversObj })
     }
     if (provider === 'opencode') {
-      return JSON.stringify({ mcp: { servers: serversObj } }, null, 2)
+      return JSON.stringify({ mcp: serversObj }, null, 2)
     }
     return JSON.stringify({ mcpServers: serversObj }, null, 2)
   }
 
-  const CANONICAL_KEYS = new Set(['name', 'transport', 'command', 'args', 'env', 'url'])
+  const CANONICAL_KEYS = new Set(['name', 'transport', 'command', 'args', 'env', 'url', 'headers'])
 
   /**
    * **Feature: tool-migration, Property 3: 额外 MCP 字段在转换时被丢弃**
@@ -279,16 +296,14 @@ describe('parseMCPFromProvider - concrete examples', () => {
     })
   })
 
-  describe('opencode (mcp.servers field path)', () => {
+  describe('opencode (mcp.<name> field path)', () => {
     it('parses a valid opencode MCP config', () => {
       const config = JSON.stringify({
         mcp: {
-          servers: {
-            'my-server': {
-              command: 'npx',
-              args: ['-y', '@some/mcp-server'],
-              env: { API_KEY: 'test-key' },
-            },
+          'my-server': {
+            type: 'local',
+            command: ['npx', '-y', '@some/mcp-server'],
+            environment: { API_KEY: 'test-key' },
           },
         },
       })
@@ -302,10 +317,23 @@ describe('parseMCPFromProvider - concrete examples', () => {
       expect(result).toEqual([])
     })
 
-    it('returns empty array when mcp.servers is missing', () => {
+    it('returns empty array when mcp is empty', () => {
       const config = JSON.stringify({ mcp: {} })
       const result = parseMCPFromProvider('opencode', config)
       expect(result).toEqual([])
+    })
+
+    it('parses remote opencode server', () => {
+      const config = JSON.stringify({
+        mcp: {
+          'remote-srv': {
+            type: 'remote',
+            url: 'https://example.com/mcp',
+          },
+        },
+      })
+      const result = parseMCPFromProvider('opencode', config)
+      expect(result).toEqual([{ name: 'remote-srv', transport: 'url', url: 'https://example.com/mcp' }])
     })
   })
 
@@ -370,6 +398,148 @@ API_KEY = "test-key"
       const result = parseMCPFromProvider('qoder', config)
       expect(result).toEqual([sampleServer])
     })
+  })
+
+  describe('cursor (mcpServers field path)', () => {
+    it('parses a valid cursor MCP config', () => {
+      const config = JSON.stringify({
+        mcpServers: {
+          'my-server': {
+            command: 'npx',
+            args: ['-y', '@some/mcp-server'],
+            env: { API_KEY: 'test-key' },
+          },
+        },
+      })
+      const result = parseMCPFromProvider('cursor', config)
+      expect(result).toEqual([sampleServer])
+    })
+  })
+})
+
+describe('parseMCPFromProvider - mcp-remote bridge detection', () => {
+  it('detects npx mcp-remote@latest pattern and converts to URL transport with headers', () => {
+    const config = JSON.stringify({
+      mcpServers: {
+        github: {
+          command: 'npx',
+          args: ['-y', 'mcp-remote@latest', 'https://api.githubcopilot.com/mcp/', '--header', 'Authorization: Bearer token123'],
+        },
+      },
+    })
+    const result = parseMCPFromProvider('claudecode', config)
+    expect(result).toHaveLength(1)
+    expect(result[0].transport).toBe('url')
+    expect(result[0].url).toBe('https://api.githubcopilot.com/mcp/')
+    expect(result[0].headers).toEqual({ Authorization: 'Bearer token123' })
+    expect(result[0].command).toBeUndefined()
+    expect(result[0].args).toBeUndefined()
+  })
+
+  it('detects cmd /c npx mcp-remote pattern (Windows) with headers', () => {
+    const config = JSON.stringify({
+      mcpServers: {
+        github: {
+          command: 'cmd',
+          args: ['/c', 'npx', '-y', 'mcp-remote@latest', 'https://api.githubcopilot.com/mcp/', '--header', 'Authorization: Bearer token'],
+        },
+      },
+    })
+    const result = parseMCPFromProvider('claudecode', config)
+    expect(result).toHaveLength(1)
+    expect(result[0].transport).toBe('url')
+    expect(result[0].url).toBe('https://api.githubcopilot.com/mcp/')
+    expect(result[0].headers).toEqual({ Authorization: 'Bearer token' })
+  })
+
+  it('does not false-positive on non-mcp-remote commands', () => {
+    const config = JSON.stringify({
+      mcpServers: {
+        normal: {
+          command: 'npx',
+          args: ['-y', '@some/mcp-server', 'https://not-a-remote-url.com'],
+        },
+      },
+    })
+    const result = parseMCPFromProvider('claudecode', config)
+    expect(result).toHaveLength(1)
+    expect(result[0].transport).toBe('stdio')
+    expect(result[0].command).toBe('npx')
+  })
+
+  it('detects mcp-remote in opencode format', () => {
+    const config = JSON.stringify({
+      mcp: {
+        github: {
+          type: 'local',
+          command: ['npx', '-y', 'mcp-remote@latest', 'https://api.githubcopilot.com/mcp/', '--header', 'Authorization: Bearer tok'],
+        },
+      },
+    })
+    const result = parseMCPFromProvider('opencode', config)
+    expect(result).toHaveLength(1)
+    expect(result[0].transport).toBe('url')
+    expect(result[0].url).toBe('https://api.githubcopilot.com/mcp/')
+    expect(result[0].headers).toEqual({ Authorization: 'Bearer tok' })
+  })
+
+  it('detects mcp-remote in codex TOML format', () => {
+    const config = `
+[mcp_servers.github]
+command = "npx"
+args = ["-y", "mcp-remote@latest", "https://api.githubcopilot.com/mcp/", "--header", "Authorization: Bearer tok"]
+`
+    const result = parseMCPFromProvider('codex', config)
+    expect(result).toHaveLength(1)
+    expect(result[0].transport).toBe('url')
+    expect(result[0].url).toBe('https://api.githubcopilot.com/mcp/')
+    expect(result[0].headers).toEqual({ Authorization: 'Bearer tok' })
+  })
+
+  it('mcp-remote without --header has no headers', () => {
+    const config = JSON.stringify({
+      mcpServers: {
+        remote: {
+          command: 'npx',
+          args: ['-y', 'mcp-remote', 'https://example.com/mcp'],
+        },
+      },
+    })
+    const result = parseMCPFromProvider('kiro', config)
+    expect(result).toHaveLength(1)
+    expect(result[0].transport).toBe('url')
+    expect(result[0].url).toBe('https://example.com/mcp')
+    expect(result[0].headers).toBeUndefined()
+  })
+
+  it('parses headers from claudecode native HTTP config', () => {
+    const config = JSON.stringify({
+      mcpServers: {
+        github: {
+          type: 'http',
+          url: 'https://api.githubcopilot.com/mcp/',
+          headers: { Authorization: 'Bearer ghp_xxx' },
+        },
+      },
+    })
+    const result = parseMCPFromProvider('claudecode', config)
+    expect(result).toHaveLength(1)
+    expect(result[0].transport).toBe('url')
+    expect(result[0].headers).toEqual({ Authorization: 'Bearer ghp_xxx' })
+  })
+
+  it('serializes headers to claudecode format', () => {
+    const servers: CanonicalMCPServer[] = [{
+      name: 'github',
+      transport: 'url',
+      url: 'https://api.githubcopilot.com/mcp/',
+      headers: { Authorization: 'Bearer ghp_xxx' },
+    }]
+    const serialized = serializeMCPForProvider('claudecode', servers)
+    const parsed = JSON.parse(serialized)
+    expect(parsed.mcpServers.github.type).toBe('http')
+    expect(parsed.mcpServers.github.url).toBe('https://api.githubcopilot.com/mcp/')
+    expect(parsed.mcpServers.github.headers).toEqual({ Authorization: 'Bearer ghp_xxx' })
   })
 })
 
@@ -517,16 +687,16 @@ describe('serializeMCPForProvider - concrete examples', () => {
     expect(json.mcp).toBeUndefined()
   })
 
-  it('serializes to mcp.servers format for opencode', () => {
+  it('serializes to mcp format for opencode', () => {
     const json = JSON.parse(serializeMCPForProvider('opencode', servers))
-    expect(json.mcp.servers['server-a']).toEqual({
-      command: 'npx',
-      args: ['-y', '@pkg/a'],
-      env: { KEY: 'val' },
+    expect(json.mcp['server-a']).toEqual({
+      type: 'local',
+      command: ['npx', '-y', '@pkg/a'],
+      environment: { KEY: 'val' },
     })
-    expect(json.mcp.servers['server-b']).toEqual({
-      command: 'node',
-      args: ['index.js'],
+    expect(json.mcp['server-b']).toEqual({
+      type: 'local',
+      command: ['node', 'index.js'],
     })
     expect(json.mcpServers).toBeUndefined()
   })
@@ -555,6 +725,12 @@ describe('serializeMCPForProvider - concrete examples', () => {
 
   it('serializes to mcpServers format for qoder', () => {
     const json = JSON.parse(serializeMCPForProvider('qoder', servers))
+    expect(json.mcpServers).toBeDefined()
+    expect(json.mcp).toBeUndefined()
+  })
+
+  it('serializes to mcpServers format for cursor', () => {
+    const json = JSON.parse(serializeMCPForProvider('cursor', servers))
     expect(json.mcpServers).toBeDefined()
     expect(json.mcp).toBeUndefined()
   })

@@ -9,7 +9,7 @@ import type { MigrationScope } from '../utils/migration-paths.js'
 import { readMigrationData, prepareMigrationData } from '../utils/migration-adapter.js'
 import { buildMigrationPlan, executeMigrationPlan } from '../utils/migration-plan.js'
 
-const ALL_PROVIDERS: ProviderName[] = ['claudecode', 'opencode', 'codex', 'gemini-cli', 'kiro', 'qoder']
+const ALL_PROVIDERS: ProviderName[] = ['claudecode', 'opencode', 'codex', 'gemini-cli', 'kiro', 'qoder', 'cursor']
 const ALL_SCOPES: MigrationScope[] = ['global', 'project']
 
 function isValidProvider(value: string): value is ProviderName {
@@ -30,7 +30,8 @@ export default defineCommand({
     scope: { type: 'string', description: 'Migration scope: global or project' },
     cwd: { type: 'string', description: 'Project root directory (for project scope)' },
     'dry-run': { type: 'boolean', default: false, description: 'Preview changes without writing' },
-    yes: { type: 'boolean', default: false, description: 'Skip confirmation prompts and overwrite conflicts' },
+    overwrite: { type: 'boolean', default: false, description: 'Overwrite existing files (default: skip conflicts)' },
+    yes: { type: 'boolean', default: false, description: 'Skip confirmation prompts' },
   },
   async run({ args }) {
     p.intro(cyan('usync migrate'))
@@ -134,8 +135,14 @@ export default defineCommand({
 
     consola.info(`Found ${data.mcpServers.length} MCP server(s) and ${data.skills.length} skill file(s)`)
 
-    // Convert skills format for target provider
-    const preparedData = prepareMigrationData(data, from, scope, to, scope)
+    // Convert skills format for target provider, filter incompatible servers
+    const { data: preparedData, skippedServers } = prepareMigrationData(data, from, scope, to, scope)
+
+    if (skippedServers.length > 0) {
+      for (const s of skippedServers) {
+        consola.warn(`Skipping MCP server "${s.name}" — requires auth headers but ${to} does not support custom headers for URL transport`)
+      }
+    }
 
     // Build migration plan
     s.start('Building migration plan...')
@@ -176,27 +183,39 @@ export default defineCommand({
 
     // Resolve conflicts
     const conflicts = plan.items.filter(i => i.action === 'conflict')
-    if (conflicts.length > 0 && !args.yes) {
-      const overwriteAll = await p.confirm({
-        message: `${conflicts.length} file(s) already exist. Overwrite all?`,
-      })
-      if (p.isCancel(overwriteAll)) {
-        p.cancel('Migration cancelled.')
-        process.exitCode = 0
-        return
+    if (conflicts.length > 0) {
+      if (args.overwrite) {
+        // --overwrite: keep all conflicts as 'conflict' (will overwrite)
       }
-      if (!overwriteAll) {
+      else if (args.yes) {
+        // --yes without --overwrite: skip all conflicts (safe default)
         for (const item of conflicts) {
-          const overwrite = await p.confirm({
-            message: `Overwrite ${item.targetPath}?`,
-          })
-          if (p.isCancel(overwrite)) {
-            p.cancel('Migration cancelled.')
-            process.exitCode = 0
-            return
-          }
-          if (!overwrite) {
-            item.action = 'skip'
+          item.action = 'skip'
+        }
+      }
+      else {
+        // Interactive: ask user per conflict
+        const overwriteAll = await p.confirm({
+          message: `${conflicts.length} file(s) already exist. Overwrite all?`,
+        })
+        if (p.isCancel(overwriteAll)) {
+          p.cancel('Migration cancelled.')
+          process.exitCode = 0
+          return
+        }
+        if (!overwriteAll) {
+          for (const item of conflicts) {
+            const overwrite = await p.confirm({
+              message: `Overwrite ${item.targetPath}?`,
+            })
+            if (p.isCancel(overwrite)) {
+              p.cancel('Migration cancelled.')
+              process.exitCode = 0
+              return
+            }
+            if (!overwrite) {
+              item.action = 'skip'
+            }
           }
         }
       }

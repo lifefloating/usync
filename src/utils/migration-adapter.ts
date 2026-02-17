@@ -84,6 +84,17 @@ function convertSkills(
 }
 
 /**
+ * Directories to exclude when reading skills.
+ * These are provider-internal/system directories that should not be migrated.
+ * e.g. codex `.system/` contains built-in skill-creator and skill-installer.
+ */
+function isSystemSkillPath(relativePath: string): boolean {
+  // Exclude files under dot-prefixed top-level directories (e.g. .system/)
+  return relativePath.startsWith('.')
+    || relativePath.includes('/.') // nested hidden dirs
+}
+
+/**
  * Read migration data (MCP servers + skills) from a source provider.
  */
 export async function readMigrationData(
@@ -95,7 +106,9 @@ export async function readMigrationData(
   const mcpServers = await readMCPConfig(provider, mcpPath)
 
   const skillsDir = getSkillsDir(provider, scope, projectRoot)
-  const skills = await readFilesFromDir(skillsDir)
+  const allSkills = await readFilesFromDir(skillsDir)
+  // Filter out provider-internal system skills (e.g. codex .system/)
+  const skills = allSkills.filter(s => !isSystemSkillPath(s.relativePath))
 
   // Claude Code also reads CLAUDE.md from project root (project scope only)
   if (provider === 'claudecode' && scope === 'project') {
@@ -110,8 +123,24 @@ export async function readMigrationData(
 }
 
 /**
+ * Providers that support custom headers for URL transport servers.
+ * Servers with headers migrated to unsupported providers will be skipped.
+ */
+const HEADERS_SUPPORTED_PROVIDERS = new Set<ProviderName>([
+  'claudecode', 'opencode', 'codex', 'gemini-cli', 'kiro', 'cursor',
+])
+
+export interface PreparedMigrationResult {
+  data: MigrationData
+  /** URL transport servers skipped due to provider incompatibility */
+  skippedServers: CanonicalMCPServer[]
+}
+
+/**
  * Prepare migration data for writing to a target provider.
  * Converts skills format between structured and flat as needed.
+ * Filters out incompatible MCP servers (e.g. URL servers with headers
+ * when target provider doesn't support custom headers).
  */
 export function prepareMigrationData(
   data: MigrationData,
@@ -119,11 +148,28 @@ export function prepareMigrationData(
   fromScope: MigrationScope,
   toProvider: ProviderName,
   toScope: MigrationScope,
-): MigrationData {
+): PreparedMigrationResult {
   const sourceStructured = isStructuredSkills(fromProvider, fromScope)
   const targetStructured = isStructuredSkills(toProvider, toScope)
   const convertedSkills = convertSkills(data.skills, sourceStructured, targetStructured)
-  return { mcpServers: data.mcpServers, skills: convertedSkills }
+
+  // Filter out URL servers with headers when target doesn't support headers
+  const skippedServers: CanonicalMCPServer[] = []
+  let mcpServers = data.mcpServers
+  if (!HEADERS_SUPPORTED_PROVIDERS.has(toProvider)) {
+    mcpServers = data.mcpServers.filter((s) => {
+      if (s.transport === 'url' && s.headers && Object.keys(s.headers).length > 0) {
+        skippedServers.push(s)
+        return false
+      }
+      return true
+    })
+  }
+
+  return {
+    data: { mcpServers, skills: convertedSkills },
+    skippedServers,
+  }
 }
 
 /**
@@ -156,33 +202,90 @@ export async function writeMigrationData(
       }
     }
 
-    // Build the servers object from canonical format
-    const serversObj: Record<string, Record<string, unknown>> = {}
-    for (const server of data.mcpServers) {
-      const entry: Record<string, unknown> = {}
-      if (server.transport === 'url') {
-        entry.url = server.url
-      }
-      else {
-        entry.command = server.command ?? ''
-        entry.args = server.args ?? []
-      }
-      if (server.env && Object.keys(server.env).length > 0) {
-        entry.env = server.env
-      }
-      serversObj[server.name] = entry
-    }
-
-    // Merge into existing config
+    // Build the servers object from canonical format and merge into existing config
     if (provider === 'opencode') {
+      // OpenCode format: mcp.<name> = { type, command (array), environment }
+      const mcpObj: Record<string, Record<string, unknown>> = {}
+      for (const server of data.mcpServers) {
+        const entry: Record<string, unknown> = {}
+        if (server.transport === 'url') {
+          entry.type = 'remote'
+          entry.url = server.url
+          if (server.headers && Object.keys(server.headers).length > 0) {
+            entry.headers = server.headers
+          }
+        }
+        else {
+          entry.type = 'local'
+          entry.command = [server.command ?? '', ...(server.args ?? [])]
+        }
+        if (server.env && Object.keys(server.env).length > 0) {
+          entry.environment = server.env
+        }
+        mcpObj[server.name] = entry
+      }
       const mcp = (existingConfig.mcp as Record<string, unknown>) || {}
-      mcp.servers = serversObj
+      Object.assign(mcp, mcpObj)
       existingConfig.mcp = mcp
     }
     else if (provider === 'codex') {
+      const serversObj: Record<string, Record<string, unknown>> = {}
+      for (const server of data.mcpServers) {
+        const entry: Record<string, unknown> = {}
+        if (server.transport === 'url') {
+          entry.url = server.url
+          if (server.headers && Object.keys(server.headers).length > 0) {
+            entry.http_headers = server.headers
+          }
+        }
+        else {
+          entry.command = server.command ?? ''
+          entry.args = server.args ?? []
+        }
+        if (server.env && Object.keys(server.env).length > 0) {
+          entry.env = server.env
+        }
+        serversObj[server.name] = entry
+      }
       existingConfig.mcp_servers = serversObj
     }
     else {
+      // Standard mcpServers format (claudecode, kiro, qoder, gemini-cli, cursor)
+      const serversObj: Record<string, Record<string, unknown>> = {}
+      for (const server of data.mcpServers) {
+        const entry: Record<string, unknown> = {}
+        if (server.transport === 'url') {
+          if (provider === 'claudecode') {
+            // Claude Code requires "type": "http" for URL-based servers
+            entry.type = 'http'
+            entry.url = server.url
+          }
+          else if (provider === 'gemini-cli') {
+            // Gemini CLI uses "httpUrl" for HTTP streaming transport
+            entry.httpUrl = server.url
+          }
+          else if (provider === 'cursor') {
+            // Cursor uses "url" with "type": "sse" for remote servers
+            entry.type = 'sse'
+            entry.url = server.url
+          }
+          else {
+            entry.url = server.url
+          }
+          // Write headers for URL transport servers
+          if (server.headers && Object.keys(server.headers).length > 0) {
+            entry.headers = server.headers
+          }
+        }
+        else {
+          entry.command = server.command ?? ''
+          entry.args = server.args ?? []
+        }
+        if (server.env && Object.keys(server.env).length > 0) {
+          entry.env = server.env
+        }
+        serversObj[server.name] = entry
+      }
       existingConfig.mcpServers = serversObj
     }
 

@@ -8,7 +8,7 @@ import type { MigrationData, SkillFile } from '../src/utils/migration-adapter.js
 import type { CanonicalMCPServer } from '../src/utils/mcp.js'
 import type { ProviderName } from '../src/types.js'
 
-const ALL_PROVIDERS: ProviderName[] = ['claudecode', 'opencode', 'codex', 'gemini-cli', 'kiro', 'qoder']
+const ALL_PROVIDERS: ProviderName[] = ['claudecode', 'opencode', 'codex', 'gemini-cli', 'kiro', 'qoder', 'cursor']
 
 let testDir: string
 
@@ -30,6 +30,7 @@ function skillsDirRel(provider: ProviderName): string {
     case 'codex': return '.codex/skills'
     case 'qoder': return '.qoder/skills'
     case 'gemini-cli': return '.gemini/skills'
+    case 'cursor': return '.cursor/rules'
   }
 }
 

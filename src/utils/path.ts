@@ -51,7 +51,8 @@ const PROVIDER_PREFIXES: Record<ProviderName, string[]> = {
   'codex': ['.codex/'],
   'gemini-cli': ['.gemini/'],
   'kiro': ['.kiro/'],
-  'qoder': ['.config/qoder/'],
+  'qoder': ['.qoder/'],
+  'cursor': ['.cursor/'],
 }
 
 const PROVIDER_ALIASES: Record<ProviderName, string> = {
@@ -61,6 +62,7 @@ const PROVIDER_ALIASES: Record<ProviderName, string> = {
   'gemini-cli': 'gemini',
   'kiro': 'kiro',
   'qoder': 'qoder',
+  'cursor': 'cursor',
 }
 
 export function templatePathToOutputPath(templatePath: string, provider: ProviderName): string {

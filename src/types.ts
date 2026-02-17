@@ -1,6 +1,6 @@
 import type { Buffer } from 'node:buffer'
 
-export type ProviderName = 'claudecode' | 'opencode' | 'codex' | 'gemini-cli' | 'kiro' | 'qoder'
+export type ProviderName = 'claudecode' | 'opencode' | 'codex' | 'gemini-cli' | 'kiro' | 'qoder' | 'cursor'
 
 export type ItemCategory = 'settings' | 'skills' | 'teams' | 'other'
 
