@@ -10,13 +10,13 @@ usync-cli init [options]
 
 ## Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `--token` | string | — | GitHub Personal Access Token |
-| `--token-env` | string | `GITHUB_TOKEN` | Environment variable name for token |
-| `--gist-id` | string | — | Existing Gist ID to verify access |
-| `--description` | string | `cloudSettings` | Description for new Gist |
-| `--public` | boolean | `false` | Create public Gist |
+| Option | Alias | Default | Description |
+|--------|-------|---------|-------------|
+| `--token` | `-T` | — | GitHub Personal Access Token |
+| `--token-env` | | `GITHUB_TOKEN` | Environment variable name for token |
+| `--gist-id` | `-g` | — | Existing Gist ID to verify access |
+| `--description` | `-d` | `cloudSettings` | Description for new Gist |
+| `--public` | `-p` | `false` | Create public Gist |
 
 ## Interactive Mode
 

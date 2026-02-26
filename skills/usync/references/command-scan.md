@@ -10,10 +10,10 @@ usync-cli scan [options]
 
 ## Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `--providers` | string | — | Comma-separated filter: `claude,opencode,codex,gemini,kiro,qoder,cursor` |
-| `--cwd` | string | `process.cwd()` | Project root for project-level config discovery |
+| Option | Alias | Default | Description |
+|--------|-------|---------|-------------|
+| `--providers` | | — | Comma-separated filter: `claude,opencode,codex,gemini,kiro,qoder,cursor` |
+| `--cwd` | `-C` | `process.cwd()` | Project root for project-level config discovery |
 
 ## Output
 

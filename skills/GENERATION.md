@@ -4,7 +4,7 @@
 
 **Generated from source at:**
 - **Date**: 2026-02-26
-- **Version**: 0.1.0
+- **Version**: 1.1.2
 
 **Source:**
 - Main source: `/src` folder

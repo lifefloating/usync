@@ -10,17 +10,17 @@ usync-cli upload [options]
 
 ## Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `--token` | string | — | GitHub PAT (scope: gist write) |
-| `--token-env` | string | `GITHUB_TOKEN` | Token env var name |
-| `--gist-id` | string | — | Existing Gist ID; creates new if omitted |
-| `--description` | string | `cloudSettings` | Gist description |
-| `--public` | boolean | `false` | Create public Gist |
-| `--providers` | string | — | Filter providers (comma-separated) |
-| `--cwd` | string | `process.cwd()` | Project root directory |
-| `--watch` | boolean | `false` | Watch for changes and auto-upload |
-| `--interval` | string | `15` | Watch polling interval in seconds |
+| Option | Alias | Default | Description |
+|--------|-------|---------|-------------|
+| `--token` | `-T` | — | GitHub PAT (scope: gist write) |
+| `--token-env` | | `GITHUB_TOKEN` | Token env var name |
+| `--gist-id` | `-g` | — | Existing Gist ID; creates new if omitted |
+| `--description` | `-d` | `cloudSettings` | Gist description |
+| `--public` | `-p` | `false` | Create public Gist |
+| `--providers` | | — | Filter providers (comma-separated) |
+| `--cwd` | `-C` | `process.cwd()` | Project root directory |
+| `--watch` | | `false` | Watch for changes and auto-upload |
+| `--interval` | `-i` | `15` | Watch polling interval in seconds |
 
 ## Incremental Sync
 
