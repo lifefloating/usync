@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os'
 import { readMigrationData, writeMigrationData } from '../src/utils/migration-adapter.js'
 import type { ProviderName } from '../src/types.js'
 
-const ALL_PROVIDERS: ProviderName[] = ['claudecode', 'opencode', 'codex', 'gemini-cli', 'kiro', 'qoder', 'cursor']
+const ALL_PROVIDERS: ProviderName[] = ['claude', 'opencode', 'codex', 'gemini', 'kiro', 'qoder', 'cursor']
 
 let testDir: string
 
@@ -79,14 +79,14 @@ describe('Migration Adapter - Skills content property tests', () => {
 
 
 describe('readMigrationData - skills read paths (project scope)', () => {
-  it('reads CLAUDE.md and .claude/skills/ for claudecode', async () => {
+  it('reads CLAUDE.md and .claude/skills/ for claude', async () => {
     const root = join(testDir, 'cc-read')
     await fs.mkdir(root, { recursive: true })
     await fs.writeFile(join(root, 'CLAUDE.md'), '# Claude Instructions', 'utf-8')
     await fs.mkdir(join(root, '.claude', 'skills'), { recursive: true })
     await fs.writeFile(join(root, '.claude', 'skills', 'skill1.md'), '# Skill 1', 'utf-8')
 
-    const data = await readMigrationData('claudecode', 'project', root)
+    const data = await readMigrationData('claude', 'project', root)
     expect(data.skills).toHaveLength(2)
     expect(data.skills[0]).toEqual({ relativePath: 'CLAUDE.md', content: '# Claude Instructions' })
     expect(data.skills[1]).toEqual({ relativePath: 'skill1.md', content: '# Skill 1' })
@@ -132,20 +132,20 @@ describe('readMigrationData - skills read paths (project scope)', () => {
     expect(data.skills[0]).toEqual({ relativePath: 'prompt.md', content: '# Prompt' })
   })
 
-  it('reads .gemini/skills/ for gemini-cli', async () => {
+  it('reads .gemini/skills/ for gemini', async () => {
     const root = join(testDir, 'gem-read')
     await fs.mkdir(join(root, '.gemini', 'skills'), { recursive: true })
     await fs.writeFile(join(root, '.gemini', 'skills', 'inst.md'), '# Instructions', 'utf-8')
 
-    const data = await readMigrationData('gemini-cli', 'project', root)
+    const data = await readMigrationData('gemini', 'project', root)
     expect(data.skills).toHaveLength(1)
     expect(data.skills[0]).toEqual({ relativePath: 'inst.md', content: '# Instructions' })
   })
 
-  it('reads .cursor/rules/ for cursor', async () => {
+  it('reads .cursor/skills/ for cursor', async () => {
     const root = join(testDir, 'cur-read')
-    await fs.mkdir(join(root, '.cursor', 'rules'), { recursive: true })
-    await fs.writeFile(join(root, '.cursor', 'rules', 'style.md'), '# Style Guide', 'utf-8')
+    await fs.mkdir(join(root, '.cursor', 'skills'), { recursive: true })
+    await fs.writeFile(join(root, '.cursor', 'skills', 'style.md'), '# Style Guide', 'utf-8')
 
     const data = await readMigrationData('cursor', 'project', root)
     expect(data.skills).toHaveLength(1)
@@ -162,14 +162,14 @@ describe('readMigrationData - skills read paths (project scope)', () => {
 })
 
 describe('readMigrationData - MCP config read (project scope)', () => {
-  it('reads MCP from .mcp.json for claudecode', async () => {
+  it('reads MCP from .mcp.json for claude', async () => {
     const root = join(testDir, 'cc-mcp')
     await fs.mkdir(root, { recursive: true })
     await fs.writeFile(join(root, '.mcp.json'), JSON.stringify({
       mcpServers: { 'test-server': { command: 'npx', args: ['--flag'] } },
     }), 'utf-8')
 
-    const data = await readMigrationData('claudecode', 'project', root)
+    const data = await readMigrationData('claude', 'project', root)
     expect(data.mcpServers).toHaveLength(1)
     expect(data.mcpServers[0].name).toBe('test-server')
     expect(data.mcpServers[0].command).toBe('npx')
@@ -199,11 +199,11 @@ describe('readMigrationData - MCP config read (project scope)', () => {
 describe('writeMigrationData - skills write paths (project scope)', () => {
   const sampleSkills = [{ relativePath: 'test.md', content: '# Test Content' }]
 
-  it('writes skills to .claude/skills/ for claudecode', async () => {
+  it('writes skills to .claude/skills/ for claude', async () => {
     const root = join(testDir, 'cc-write')
     await fs.mkdir(root, { recursive: true })
 
-    await writeMigrationData('claudecode', 'project', { mcpServers: [], skills: sampleSkills }, root)
+    await writeMigrationData('claude', 'project', { mcpServers: [], skills: sampleSkills }, root)
     const content = await fs.readFile(join(root, '.claude', 'skills', 'test.md'), 'utf-8')
     expect(content).toBe('# Test Content')
   })
@@ -235,21 +235,21 @@ describe('writeMigrationData - skills write paths (project scope)', () => {
     expect(content).toBe('# Test Content')
   })
 
-  it('writes skills to .gemini/skills/ for gemini-cli', async () => {
+  it('writes skills to .gemini/skills/ for gemini', async () => {
     const root = join(testDir, 'gem-write')
     await fs.mkdir(root, { recursive: true })
 
-    await writeMigrationData('gemini-cli', 'project', { mcpServers: [], skills: sampleSkills }, root)
+    await writeMigrationData('gemini', 'project', { mcpServers: [], skills: sampleSkills }, root)
     const content = await fs.readFile(join(root, '.gemini', 'skills', 'test.md'), 'utf-8')
     expect(content).toBe('# Test Content')
   })
 
-  it('writes skills to .cursor/rules/ for cursor', async () => {
+  it('writes skills to .cursor/skills/ for cursor', async () => {
     const root = join(testDir, 'cur-write')
     await fs.mkdir(root, { recursive: true })
 
     await writeMigrationData('cursor', 'project', { mcpServers: [], skills: sampleSkills }, root)
-    const content = await fs.readFile(join(root, '.cursor', 'rules', 'test.md'), 'utf-8')
+    const content = await fs.readFile(join(root, '.cursor', 'skills', 'test.md'), 'utf-8')
     expect(content).toBe('# Test Content')
   })
 })

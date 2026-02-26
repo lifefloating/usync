@@ -9,7 +9,7 @@ import type { MigrationScope } from '../utils/migration-paths.js'
 import { readMigrationData, prepareMigrationData } from '../utils/migration-adapter.js'
 import { buildMigrationPlan, executeMigrationPlan } from '../utils/migration-plan.js'
 
-const ALL_PROVIDERS: ProviderName[] = ['claudecode', 'opencode', 'codex', 'gemini-cli', 'kiro', 'qoder', 'cursor']
+const ALL_PROVIDERS: ProviderName[] = ['claude', 'opencode', 'codex', 'gemini', 'kiro', 'qoder', 'cursor']
 const ALL_SCOPES: MigrationScope[] = ['global', 'project']
 
 function isValidProvider(value: string): value is ProviderName {
@@ -25,13 +25,13 @@ export default defineCommand({
     description: 'Migrate MCP configs and skills between AI coding tools',
   },
   args: {
-    from: { type: 'string', description: 'Source provider' },
-    to: { type: 'string', description: 'Target provider' },
-    scope: { type: 'string', description: 'Migration scope: global or project' },
-    cwd: { type: 'string', description: 'Project root directory (for project scope)' },
-    'dry-run': { type: 'boolean', default: false, description: 'Preview changes without writing' },
-    overwrite: { type: 'boolean', default: false, description: 'Overwrite existing files (default: skip conflicts)' },
-    yes: { type: 'boolean', default: false, description: 'Skip confirmation prompts' },
+    from: { type: 'string', alias: 'f', description: 'Source provider' },
+    to: { type: 'string', alias: 't', description: 'Target provider' },
+    scope: { type: 'string', alias: 's', description: 'Migration scope: global or project' },
+    cwd: { type: 'string', alias: 'C', description: 'Project root directory (for project scope)' },
+    'dry-run': { type: 'boolean', alias: 'n', default: false, description: 'Preview changes without writing' },
+    overwrite: { type: 'boolean', alias: 'w', default: false, description: 'Overwrite existing files (default: skip conflicts)' },
+    yes: { type: 'boolean', alias: 'y', default: false, description: 'Skip confirmation prompts' },
   },
   async run({ args }) {
     p.intro(cyan('usync migrate'))

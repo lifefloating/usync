@@ -12,7 +12,7 @@ import type { CanonicalMCPServer } from '../src/utils/mcp.js'
 import type { ProviderName } from '../src/types.js'
 import type { MigrationScope } from '../src/utils/migration-paths.js'
 
-const ALL_PROVIDERS: ProviderName[] = ['claudecode', 'opencode', 'codex', 'gemini-cli', 'kiro', 'qoder', 'cursor']
+const ALL_PROVIDERS: ProviderName[] = ['claude', 'opencode', 'codex', 'gemini', 'kiro', 'qoder', 'cursor']
 const ALL_SCOPES: MigrationScope[] = ['global', 'project']
 
 let testDir: string
@@ -65,7 +65,7 @@ describe('getMCPConfigPath - correctness for all provider × scope combinations'
   const projectRoot = '/test/project'
 
   const expected: Record<string, Record<MigrationScope, string>> = {
-    claudecode: {
+    claude: {
       global: join(process.env.HOME || process.env.USERPROFILE || '', '.claude.json'),
       project: join(projectRoot, '.mcp.json'),
     },
@@ -85,7 +85,7 @@ describe('getMCPConfigPath - correctness for all provider × scope combinations'
       global: join(process.env.HOME || process.env.USERPROFILE || '', '.qoder', 'mcp.json'),
       project: join(projectRoot, '.qoder', 'mcp.json'),
     },
-    'gemini-cli': {
+    'gemini': {
       global: join(process.env.HOME || process.env.USERPROFILE || '', '.gemini', 'settings.json'),
       project: join(projectRoot, '.gemini', 'settings.json'),
     },
@@ -114,7 +114,7 @@ describe('getSkillsDir - correctness for all provider × scope combinations', ()
   const home = process.env.HOME || process.env.USERPROFILE || ''
 
   const expected: Record<string, Record<MigrationScope, string>> = {
-    claudecode: {
+    claude: {
       global: join(home, '.claude', 'skills'),
       project: join(projectRoot, '.claude', 'skills'),
     },
@@ -134,13 +134,13 @@ describe('getSkillsDir - correctness for all provider × scope combinations', ()
       global: join(home, '.qoder', 'skills'),
       project: join(projectRoot, '.qoder', 'skills'),
     },
-    'gemini-cli': {
+    'gemini': {
       global: join(home, '.gemini', 'skills'),
       project: join(projectRoot, '.gemini', 'skills'),
     },
     cursor: {
-      global: join(home, '.cursor', 'rules'),
-      project: join(projectRoot, '.cursor', 'rules'),
+      global: join(home, '.cursor', 'skills'),
+      project: join(projectRoot, '.cursor', 'skills'),
     },
   }
 
@@ -160,18 +160,18 @@ describe('getSkillsDir - correctness for all provider × scope combinations', ()
 
 describe('isStructuredSkills - correctness for all provider × scope combinations', () => {
   const expected: Record<string, Record<MigrationScope, boolean>> = {
-    claudecode: { global: true, project: true },
+    claude: { global: true, project: true },
     kiro: { global: true, project: false },
     opencode: { global: true, project: true },
     codex: { global: true, project: true },
     qoder: { global: true, project: true },
-    'gemini-cli': { global: false, project: false },
-    cursor: { global: false, project: false },
+    'gemini': { global: true, project: true },
+    cursor: { global: true, project: true },
   }
 
   for (const provider of ALL_PROVIDERS) {
     for (const scope of ALL_SCOPES) {
-      it(`${provider} / ${scope} → ${expected[provider][scope]}`, () => {
+      it(`${provider} / ${scope} →${expected[provider][scope]}`, () => {
         expect(isStructuredSkills(provider, scope)).toBe(expected[provider][scope])
       })
     }
@@ -181,31 +181,31 @@ describe('isStructuredSkills - correctness for all provider × scope combination
 
 // ============================================================
 // 4. Cross-tool MCP migration end-to-end tests
-//    Write MCP to source → read → write to target → read back → verify
+//    Write MCP to source →read →write to target →read back →verify
 // ============================================================
 
 describe('Cross-tool MCP migration end-to-end', () => {
   /** Key migration pairs covering all format variations */
   const MIGRATION_PAIRS: [ProviderName, ProviderName][] = [
-    // Standard JSON mcpServers ↔ Standard JSON mcpServers
-    ['claudecode', 'kiro'],
-    ['kiro', 'claudecode'],
-    ['claudecode', 'cursor'],
-    ['cursor', 'claudecode'],
+    // Standard JSON mcpServers →Standard JSON mcpServers
+    ['claude', 'kiro'],
+    ['kiro', 'claude'],
+    ['claude', 'cursor'],
+    ['cursor', 'claude'],
     ['kiro', 'qoder'],
     ['qoder', 'kiro'],
-    ['gemini-cli', 'kiro'],
-    // Standard JSON mcpServers ↔ OpenCode (mcp.<name> with command array)
-    ['claudecode', 'opencode'],
+    ['gemini', 'kiro'],
+    // Standard JSON mcpServers →OpenCode (mcp.<name> with command array)
+    ['claude', 'opencode'],
     ['opencode', 'kiro'],
-    ['opencode', 'claudecode'],
+    ['opencode', 'claude'],
     ['cursor', 'opencode'],
-    // Standard JSON mcpServers ↔ Codex (TOML mcp_servers)
-    ['claudecode', 'codex'],
+    // Standard JSON mcpServers →Codex (TOML mcp_servers)
+    ['claude', 'codex'],
     ['codex', 'kiro'],
-    ['codex', 'claudecode'],
+    ['codex', 'claude'],
     ['cursor', 'codex'],
-    // OpenCode ↔ Codex (both non-standard formats)
+    // OpenCode →Codex (both non-standard formats)
     ['opencode', 'codex'],
     ['codex', 'opencode'],
   ]
@@ -228,7 +228,7 @@ describe('Cross-tool MCP migration end-to-end', () => {
   }
 
   for (const [from, to] of MIGRATION_PAIRS) {
-    it(`${from} → ${to}: MCP servers survive full write→read→write→read cycle`, async () => {
+    it(`${from} →${to}: MCP servers survive full write→read→write→read cycle`, async () => {
       const srcRoot = join(testDir, `mcp-${from}-${to}-src`)
       const dstRoot = join(testDir, `mcp-${from}-${to}-dst`)
       await fs.mkdir(srcRoot, { recursive: true })
@@ -262,10 +262,10 @@ describe('Cross-tool MCP migration end-to-end', () => {
 // ============================================================
 
 describe('MCP write format verification - raw file structure', () => {
-  it('claudecode project writes .mcp.json with mcpServers key', async () => {
+  it('claude project writes .mcp.json with mcpServers key', async () => {
     const root = join(testDir, 'fmt-cc')
     await fs.mkdir(root, { recursive: true })
-    await writeMigrationData('claudecode', 'project', { mcpServers: SAMPLE_SERVERS, skills: [] }, root)
+    await writeMigrationData('claude', 'project', { mcpServers: SAMPLE_SERVERS, skills: [] }, root)
 
     const raw = JSON.parse(await fs.readFile(join(root, '.mcp.json'), 'utf-8'))
     expect(raw.mcpServers).toBeDefined()
@@ -334,10 +334,10 @@ describe('MCP write format verification - raw file structure', () => {
     expect(raw.mcpServers).toBeDefined()
   })
 
-  it('gemini-cli project writes .gemini/settings.json with mcpServers key', async () => {
+  it('gemini project writes .gemini/settings.json with mcpServers key', async () => {
     const root = join(testDir, 'fmt-gemini')
     await fs.mkdir(root, { recursive: true })
-    await writeMigrationData('gemini-cli', 'project', { mcpServers: SAMPLE_SERVERS, skills: [] }, root)
+    await writeMigrationData('gemini', 'project', { mcpServers: SAMPLE_SERVERS, skills: [] }, root)
 
     const raw = JSON.parse(await fs.readFile(join(root, '.gemini', 'settings.json'), 'utf-8'))
     expect(raw.mcpServers).toBeDefined()
@@ -356,16 +356,16 @@ describe('URL transport MCP server migration', () => {
   ]
 
   const URL_PAIRS: [ProviderName, ProviderName][] = [
-    ['claudecode', 'kiro'],
+    ['claude', 'kiro'],
     ['kiro', 'cursor'],
-    ['claudecode', 'opencode'],
-    ['opencode', 'claudecode'],
-    ['claudecode', 'codex'],
+    ['claude', 'opencode'],
+    ['opencode', 'claude'],
+    ['claude', 'codex'],
     ['codex', 'kiro'],
   ]
 
   for (const [from, to] of URL_PAIRS) {
-    it(`${from} → ${to}: URL transport servers migrate correctly`, async () => {
+    it(`${from} →${to}: URL transport servers migrate correctly`, async () => {
       const srcRoot = join(testDir, `url-${from}-${to}-src`)
       const dstRoot = join(testDir, `url-${from}-${to}-dst`)
       await fs.mkdir(srcRoot, { recursive: true })
@@ -408,15 +408,15 @@ describe('URL transport MCP server migration', () => {
     }
   })
 
-  it('claudecode serializes URL server with type=http', () => {
-    const serialized = serializeMCPForProvider('claudecode', [SAMPLE_URL_SERVER])
+  it('claude serializes URL server with type=http', () => {
+    const serialized = serializeMCPForProvider('claude', [SAMPLE_URL_SERVER])
     const parsed = JSON.parse(serialized)
     expect(parsed.mcpServers['remote-api'].type).toBe('http')
     expect(parsed.mcpServers['remote-api'].url).toBe('https://mcp.example.com/v1')
   })
 
-  it('gemini-cli serializes URL server with httpUrl field', () => {
-    const serialized = serializeMCPForProvider('gemini-cli', [SAMPLE_URL_SERVER])
+  it('gemini serializes URL server with httpUrl field', () => {
+    const serialized = serializeMCPForProvider('gemini', [SAMPLE_URL_SERVER])
     const parsed = JSON.parse(serialized)
     expect(parsed.mcpServers['remote-api'].httpUrl).toBe('https://mcp.example.com/v1')
     expect(parsed.mcpServers['remote-api'].url).toBeUndefined()
@@ -437,17 +437,24 @@ describe('URL transport MCP server migration', () => {
 
 describe('Cross-tool skills migration end-to-end', () => {
   // structured→structured pairs
-  describe('structured → structured (preserves directory structure)', () => {
+  describe('structured →structured (preserves directory structure)', () => {
     const PAIRS: [ProviderName, ProviderName][] = [
-      ['claudecode', 'qoder'],
-      ['qoder', 'claudecode'],
-      ['claudecode', 'opencode'],
+      ['claude', 'qoder'],
+      ['qoder', 'claude'],
+      ['claude', 'opencode'],
       ['opencode', 'qoder'],
-      ['codex', 'claudecode'],
+      ['codex', 'claude'],
+      ['claude', 'gemini'],
+      ['gemini', 'claude'],
+      ['gemini', 'qoder'],
+      ['claude', 'cursor'],
+      ['cursor', 'claude'],
+      ['cursor', 'qoder'],
+      ['gemini', 'cursor'],
     ]
 
     for (const [from, to] of PAIRS) {
-      it(`${from} → ${to}: structured skills preserved`, async () => {
+      it(`${from} →${to}: structured skills preserved`, async () => {
         const srcRoot = join(testDir, `sk-ss-${from}-${to}-src`)
         const dstRoot = join(testDir, `sk-ss-${from}-${to}-dst`)
         await fs.mkdir(srcRoot, { recursive: true })
@@ -466,7 +473,7 @@ describe('Cross-tool skills migration end-to-end', () => {
           from, 'project', to, 'project',
         )
 
-        // Both structured → skills should be same count
+        // Both structured →skills should be same count
         expect(prepared.skills.length).toBe(STRUCTURED_SKILLS.length)
 
         // Write to target
@@ -486,17 +493,15 @@ describe('Cross-tool skills migration end-to-end', () => {
   })
 
   // structured→flat pairs
-  describe('structured → flat (SKILL.md becomes <name>.md, references dropped)', () => {
+  describe('structured →flat (SKILL.md becomes <name>.md, references dropped)', () => {
     const PAIRS: [ProviderName, ProviderName][] = [
-      ['claudecode', 'cursor'],
-      ['claudecode', 'gemini-cli'],
-      ['qoder', 'cursor'],
-      ['opencode', 'gemini-cli'],
-      ['claudecode', 'kiro'],  // kiro project is flat (.kiro/steering)
+      ['claude', 'kiro'],  // kiro project is flat (.kiro/steering)
+      ['opencode', 'kiro'],
+      ['cursor', 'kiro'],
     ]
 
     for (const [from, to] of PAIRS) {
-      it(`${from} → ${to}: structured skills flattened`, async () => {
+      it(`${from} →${to}: structured skills flattened`, async () => {
         const srcRoot = join(testDir, `sk-sf-${from}-${to}-src`)
         const dstRoot = join(testDir, `sk-sf-${from}-${to}-dst`)
         await fs.mkdir(srcRoot, { recursive: true })
@@ -536,17 +541,16 @@ describe('Cross-tool skills migration end-to-end', () => {
   })
 
   // flat→structured pairs
-  describe('flat → structured (<name>.md becomes <name>/SKILL.md)', () => {
+  describe('flat →structured (<name>.md becomes <name>/SKILL.md)', () => {
     const PAIRS: [ProviderName, ProviderName][] = [
-      ['cursor', 'claudecode'],
-      ['gemini-cli', 'claudecode'],
-      ['cursor', 'qoder'],
-      ['gemini-cli', 'opencode'],
-      ['kiro', 'claudecode'],  // kiro project is flat
+      ['kiro', 'claude'],  // kiro project is flat
+      ['kiro', 'gemini'],
+      ['kiro', 'cursor'],
+      ['kiro', 'qoder'],
     ]
 
     for (const [from, to] of PAIRS) {
-      it(`${from} → ${to}: flat skills become structured`, async () => {
+      it(`${from} →${to}: flat skills become structured`, async () => {
         const srcRoot = join(testDir, `sk-fs-${from}-${to}-src`)
         const dstRoot = join(testDir, `sk-fs-${from}-${to}-dst`)
         await fs.mkdir(srcRoot, { recursive: true })
@@ -560,7 +564,7 @@ describe('Cross-tool skills migration end-to-end', () => {
           from, 'project', to, 'project',
         )
 
-        // Each flat .md → <name>/SKILL.md
+        // Each flat .md →<name>/SKILL.md
         expect(prepared.skills.length).toBe(FLAT_SKILLS.length)
         for (const skill of prepared.skills) {
           expect(skill.relativePath).toMatch(/^[a-z][a-z0-9-]*\/SKILL\.md$/)
@@ -577,64 +581,32 @@ describe('Cross-tool skills migration end-to-end', () => {
     }
   })
 
-  // flat→flat pairs
-  describe('flat → flat (direct copy)', () => {
-    const PAIRS: [ProviderName, ProviderName][] = [
-      ['cursor', 'gemini-cli'],
-      ['gemini-cli', 'cursor'],
-    ]
-
-    for (const [from, to] of PAIRS) {
-      it(`${from} → ${to}: flat skills copied directly`, async () => {
-        const srcRoot = join(testDir, `sk-ff-${from}-${to}-src`)
-        const dstRoot = join(testDir, `sk-ff-${from}-${to}-dst`)
-        await fs.mkdir(srcRoot, { recursive: true })
-        await fs.mkdir(dstRoot, { recursive: true })
-
-        await writeMigrationData(from, 'project', { mcpServers: [], skills: FLAT_SKILLS }, srcRoot)
-        const readSrc = await readMigrationData(from, 'project', srcRoot)
-
-        const { data: prepared } = prepareMigrationData(
-          { mcpServers: [], skills: readSrc.skills },
-          from, 'project', to, 'project',
-        )
-
-        expect(prepared.skills.length).toBe(FLAT_SKILLS.length)
-
-        await writeMigrationData(to, 'project', prepared, dstRoot)
-        const readDst = await readMigrationData(to, 'project', dstRoot)
-
-        for (const original of FLAT_SKILLS) {
-          const found = readDst.skills.find(s => s.relativePath === original.relativePath)
-          expect(found, `Missing: ${original.relativePath}`).toBeDefined()
-          expect(found!.content).toBe(original.content)
-        }
-      })
-    }
-  })
+  // flat→flat pairs (only kiro-project is flat now)
+  // cursor is now structured, so no flat→flat cursor pairs remain
+  // kiro→kiro would be same provider, not tested here
 })
 
 
 // ============================================================
 // 8. Full migration pipeline tests
-//    readMigrationData → prepareMigrationData → buildMigrationPlan → executeMigrationPlan → readMigrationData (verify)
+//    readMigrationData →prepareMigrationData →buildMigrationPlan →executeMigrationPlan →readMigrationData (verify)
 // ============================================================
 
 describe('Full migration pipeline end-to-end', () => {
   const PIPELINE_PAIRS: [ProviderName, ProviderName][] = [
-    ['claudecode', 'kiro'],
-    ['kiro', 'claudecode'],
-    ['claudecode', 'cursor'],
+    ['claude', 'kiro'],
+    ['kiro', 'claude'],
+    ['claude', 'cursor'],
     ['opencode', 'kiro'],
-    ['codex', 'claudecode'],
+    ['codex', 'claude'],
     ['cursor', 'qoder'],
-    ['gemini-cli', 'kiro'],
-    ['claudecode', 'opencode'],
-    ['claudecode', 'codex'],
+    ['gemini', 'kiro'],
+    ['claude', 'opencode'],
+    ['claude', 'codex'],
   ]
 
   for (const [from, to] of PIPELINE_PAIRS) {
-    it(`${from} → ${to}: full pipeline with MCP + skills`, async () => {
+    it(`${from} →${to}: full pipeline with MCP + skills`, async () => {
       const srcRoot = join(testDir, `pipe-${from}-${to}-src`)
       const dstRoot = join(testDir, `pipe-${from}-${to}-dst`)
       await fs.mkdir(srcRoot, { recursive: true })
@@ -692,7 +664,7 @@ describe('Full migration pipeline end-to-end', () => {
 // ============================================================
 
 describe('MCP config merge - preserves existing fields', () => {
-  it('claudecode: existing fields in .mcp.json are preserved', async () => {
+  it('claude: existing fields in .mcp.json are preserved', async () => {
     const root = join(testDir, 'merge-cc')
     await fs.mkdir(root, { recursive: true })
     // Pre-existing config with extra fields
@@ -701,7 +673,7 @@ describe('MCP config merge - preserves existing fields', () => {
       someOtherField: 'keep-me',
     }), 'utf-8')
 
-    await writeMigrationData('claudecode', 'project', {
+    await writeMigrationData('claude', 'project', {
       mcpServers: [{ name: 'new-server', transport: 'stdio', command: 'new', args: ['--flag'] }],
       skills: [],
     }, root)
@@ -757,17 +729,17 @@ describe('MCP config merge - preserves existing fields', () => {
 describe('Cross-format MCP serialization stability', () => {
   // Test a representative subset to avoid O(n²) explosion
   const PAIRS: [ProviderName, ProviderName][] = [
-    ['claudecode', 'opencode'],
+    ['claude', 'opencode'],
     ['opencode', 'codex'],
-    ['codex', 'claudecode'],
+    ['codex', 'claude'],
     ['kiro', 'opencode'],
     ['cursor', 'codex'],
-    ['gemini-cli', 'opencode'],
+    ['gemini', 'opencode'],
     ['qoder', 'codex'],
   ]
 
   for (const [provA, provB] of PAIRS) {
-    it(`${provA} → ${provB} → ${provA}: double round-trip is stable`, () => {
+    it(`${provA} →${provB} →${provA}: double round-trip is stable`, () => {
       // Serialize for provA
       const serialA = serializeMCPForProvider(provA, SAMPLE_SERVERS)
       // Parse as provA
@@ -804,13 +776,13 @@ describe('Cross-format MCP serialization stability', () => {
 
 describe('Skills write path verification - filesystem locations', () => {
   const pathChecks: { provider: ProviderName; scope: MigrationScope; expectedDir: string }[] = [
-    { provider: 'claudecode', scope: 'project', expectedDir: '.claude/skills' },
+    { provider: 'claude', scope: 'project', expectedDir: '.claude/skills' },
     { provider: 'kiro', scope: 'project', expectedDir: '.kiro/steering' },
     { provider: 'opencode', scope: 'project', expectedDir: '.opencode/skills' },
     { provider: 'codex', scope: 'project', expectedDir: '.codex/skills' },
     { provider: 'qoder', scope: 'project', expectedDir: '.qoder/skills' },
-    { provider: 'gemini-cli', scope: 'project', expectedDir: '.gemini/skills' },
-    { provider: 'cursor', scope: 'project', expectedDir: '.cursor/rules' },
+    { provider: 'gemini', scope: 'project', expectedDir: '.gemini/skills' },
+    { provider: 'cursor', scope: 'project', expectedDir: '.cursor/skills' },
   ]
 
   for (const { provider, scope, expectedDir } of pathChecks) {
@@ -835,12 +807,12 @@ describe('Skills write path verification - filesystem locations', () => {
 
 describe('MCP config write path verification - filesystem locations', () => {
   const pathChecks: { provider: ProviderName; scope: MigrationScope; expectedPath: string }[] = [
-    { provider: 'claudecode', scope: 'project', expectedPath: '.mcp.json' },
+    { provider: 'claude', scope: 'project', expectedPath: '.mcp.json' },
     { provider: 'kiro', scope: 'project', expectedPath: '.kiro/settings/mcp.json' },
     { provider: 'opencode', scope: 'project', expectedPath: 'opencode.json' },
     { provider: 'codex', scope: 'project', expectedPath: '.codex/config.toml' },
     { provider: 'qoder', scope: 'project', expectedPath: '.qoder/mcp.json' },
-    { provider: 'gemini-cli', scope: 'project', expectedPath: '.gemini/settings.json' },
+    { provider: 'gemini', scope: 'project', expectedPath: '.gemini/settings.json' },
     { provider: 'cursor', scope: 'project', expectedPath: '.cursor/mcp.json' },
   ]
 

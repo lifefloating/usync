@@ -5,7 +5,7 @@ import { parseMCPFromProvider, serializeMCPForProvider } from '../src/utils/mcp.
 import type { CanonicalMCPServer } from '../src/utils/mcp.js'
 import type { ProviderName } from '../src/types.js'
 
-const ALL_PROVIDERS: ProviderName[] = ['claudecode', 'opencode', 'codex', 'gemini-cli', 'kiro', 'qoder', 'cursor']
+const ALL_PROVIDERS: ProviderName[] = ['claude', 'opencode', 'codex', 'gemini', 'kiro', 'qoder', 'cursor']
 
 /**
  * Generator for a valid server name: non-empty alphanumeric + hyphens,
@@ -267,8 +267,8 @@ describe('parseMCPFromProvider - concrete examples', () => {
     env: { API_KEY: 'test-key' },
   }
 
-  describe('claudecode (mcpServers field path)', () => {
-    it('parses a valid claudecode MCP config', () => {
+  describe('claude (mcpServers field path)', () => {
+    it('parses a valid claude MCP config', () => {
       const config = JSON.stringify({
         mcpServers: {
           'my-server': {
@@ -278,7 +278,7 @@ describe('parseMCPFromProvider - concrete examples', () => {
           },
         },
       })
-      const result = parseMCPFromProvider('claudecode', config)
+      const result = parseMCPFromProvider('claude', config)
       expect(result).toEqual([sampleServer])
     })
 
@@ -289,7 +289,7 @@ describe('parseMCPFromProvider - concrete examples', () => {
           'server-b': { command: 'cmd-b', args: [], env: { KEY: 'val' } },
         },
       })
-      const result = parseMCPFromProvider('claudecode', config)
+      const result = parseMCPFromProvider('claude', config)
       expect(result).toHaveLength(2)
       expect(result[0]).toEqual({ name: 'server-a', transport: 'stdio', command: 'cmd-a', args: ['--flag'] })
       expect(result[1]).toEqual({ name: 'server-b', transport: 'stdio', command: 'cmd-b', args: [], env: { KEY: 'val' } })
@@ -352,8 +352,8 @@ API_KEY = "test-key"
     })
   })
 
-  describe('gemini-cli (mcpServers field path)', () => {
-    it('parses a valid gemini-cli MCP config', () => {
+  describe('gemini (mcpServers field path)', () => {
+    it('parses a valid gemini MCP config', () => {
       const config = JSON.stringify({
         mcpServers: {
           'my-server': {
@@ -363,7 +363,7 @@ API_KEY = "test-key"
           },
         },
       })
-      const result = parseMCPFromProvider('gemini-cli', config)
+      const result = parseMCPFromProvider('gemini', config)
       expect(result).toEqual([sampleServer])
     })
   })
@@ -427,7 +427,7 @@ describe('parseMCPFromProvider - mcp-remote bridge detection', () => {
         },
       },
     })
-    const result = parseMCPFromProvider('claudecode', config)
+    const result = parseMCPFromProvider('claude', config)
     expect(result).toHaveLength(1)
     expect(result[0].transport).toBe('url')
     expect(result[0].url).toBe('https://api.githubcopilot.com/mcp/')
@@ -445,7 +445,7 @@ describe('parseMCPFromProvider - mcp-remote bridge detection', () => {
         },
       },
     })
-    const result = parseMCPFromProvider('claudecode', config)
+    const result = parseMCPFromProvider('claude', config)
     expect(result).toHaveLength(1)
     expect(result[0].transport).toBe('url')
     expect(result[0].url).toBe('https://api.githubcopilot.com/mcp/')
@@ -461,7 +461,7 @@ describe('parseMCPFromProvider - mcp-remote bridge detection', () => {
         },
       },
     })
-    const result = parseMCPFromProvider('claudecode', config)
+    const result = parseMCPFromProvider('claude', config)
     expect(result).toHaveLength(1)
     expect(result[0].transport).toBe('stdio')
     expect(result[0].command).toBe('npx')
@@ -512,7 +512,7 @@ args = ["-y", "mcp-remote@latest", "https://api.githubcopilot.com/mcp/", "--head
     expect(result[0].headers).toBeUndefined()
   })
 
-  it('parses headers from claudecode native HTTP config', () => {
+  it('parses headers from claude native HTTP config', () => {
     const config = JSON.stringify({
       mcpServers: {
         github: {
@@ -522,20 +522,20 @@ args = ["-y", "mcp-remote@latest", "https://api.githubcopilot.com/mcp/", "--head
         },
       },
     })
-    const result = parseMCPFromProvider('claudecode', config)
+    const result = parseMCPFromProvider('claude', config)
     expect(result).toHaveLength(1)
     expect(result[0].transport).toBe('url')
     expect(result[0].headers).toEqual({ Authorization: 'Bearer ghp_xxx' })
   })
 
-  it('serializes headers to claudecode format', () => {
+  it('serializes headers to claude format', () => {
     const servers: CanonicalMCPServer[] = [{
       name: 'github',
       transport: 'url',
       url: 'https://api.githubcopilot.com/mcp/',
       headers: { Authorization: 'Bearer ghp_xxx' },
     }]
-    const serialized = serializeMCPForProvider('claudecode', servers)
+    const serialized = serializeMCPForProvider('claude', servers)
     const parsed = JSON.parse(serialized)
     expect(parsed.mcpServers.github.type).toBe('http')
     expect(parsed.mcpServers.github.url).toBe('https://api.githubcopilot.com/mcp/')
@@ -545,29 +545,29 @@ args = ["-y", "mcp-remote@latest", "https://api.githubcopilot.com/mcp/", "--head
 
 describe('parseMCPFromProvider - edge cases', () => {
   it('returns empty array for invalid JSON', () => {
-    const result = parseMCPFromProvider('claudecode', 'not-json{{{')
+    const result = parseMCPFromProvider('claude', 'not-json{{{')
     expect(result).toEqual([])
   })
 
   it('returns empty array for JSON that is not an object', () => {
-    expect(parseMCPFromProvider('claudecode', '"hello"')).toEqual([])
-    expect(parseMCPFromProvider('claudecode', '42')).toEqual([])
-    expect(parseMCPFromProvider('claudecode', 'null')).toEqual([])
-    expect(parseMCPFromProvider('claudecode', '[]')).toEqual([])
+    expect(parseMCPFromProvider('claude', '"hello"')).toEqual([])
+    expect(parseMCPFromProvider('claude', '42')).toEqual([])
+    expect(parseMCPFromProvider('claude', 'null')).toEqual([])
+    expect(parseMCPFromProvider('claude', '[]')).toEqual([])
   })
 
   it('returns empty array for empty object (no mcpServers field)', () => {
-    const result = parseMCPFromProvider('claudecode', '{}')
+    const result = parseMCPFromProvider('claude', '{}')
     expect(result).toEqual([])
   })
 
   it('returns empty array when mcpServers is not an object', () => {
-    const result = parseMCPFromProvider('claudecode', JSON.stringify({ mcpServers: 'bad' }))
+    const result = parseMCPFromProvider('claude', JSON.stringify({ mcpServers: 'bad' }))
     expect(result).toEqual([])
   })
 
   it('returns empty array for empty mcpServers object', () => {
-    const result = parseMCPFromProvider('claudecode', JSON.stringify({ mcpServers: {} }))
+    const result = parseMCPFromProvider('claude', JSON.stringify({ mcpServers: {} }))
     expect(result).toEqual([])
   })
 
@@ -579,7 +579,7 @@ describe('parseMCPFromProvider - edge cases', () => {
         'null-server': null,
       },
     })
-    const result = parseMCPFromProvider('claudecode', config)
+    const result = parseMCPFromProvider('claude', config)
     expect(result).toHaveLength(1)
     expect(result[0].name).toBe('valid-server')
   })
@@ -590,7 +590,7 @@ describe('parseMCPFromProvider - edge cases', () => {
         'no-cmd': { args: ['--flag'] },
       },
     })
-    const result = parseMCPFromProvider('claudecode', config)
+    const result = parseMCPFromProvider('claude', config)
     expect(result[0].command).toBe('')
   })
 
@@ -600,7 +600,7 @@ describe('parseMCPFromProvider - edge cases', () => {
         'no-args': { command: 'cmd' },
       },
     })
-    const result = parseMCPFromProvider('claudecode', config)
+    const result = parseMCPFromProvider('claude', config)
     expect(result[0].args).toEqual([])
   })
 
@@ -610,7 +610,7 @@ describe('parseMCPFromProvider - edge cases', () => {
         s: { command: 'cmd', args: ['valid', 123, null, 'also-valid'] },
       },
     })
-    const result = parseMCPFromProvider('claudecode', config)
+    const result = parseMCPFromProvider('claude', config)
     expect(result[0].args).toEqual(['valid', 'also-valid'])
   })
 
@@ -620,7 +620,7 @@ describe('parseMCPFromProvider - edge cases', () => {
         s: { command: 'cmd', args: [], env: 'not-object' },
       },
     })
-    const result = parseMCPFromProvider('claudecode', config)
+    const result = parseMCPFromProvider('claude', config)
     expect(result[0].env).toBeUndefined()
   })
 
@@ -630,7 +630,7 @@ describe('parseMCPFromProvider - edge cases', () => {
         s: { command: 'cmd', args: [], env: ['a', 'b'] },
       },
     })
-    const result = parseMCPFromProvider('claudecode', config)
+    const result = parseMCPFromProvider('claude', config)
     expect(result[0].env).toBeUndefined()
   })
 
@@ -640,7 +640,7 @@ describe('parseMCPFromProvider - edge cases', () => {
         s: { command: 'cmd', args: [], env: { GOOD: 'val', BAD: 123, ALSO_BAD: null } },
       },
     })
-    const result = parseMCPFromProvider('claudecode', config)
+    const result = parseMCPFromProvider('claude', config)
     expect(result[0].env).toEqual({ GOOD: 'val' })
   })
 
@@ -650,7 +650,7 @@ describe('parseMCPFromProvider - edge cases', () => {
         s: { command: 'cmd', args: [], env: { BAD: 123 } },
       },
     })
-    const result = parseMCPFromProvider('claudecode', config)
+    const result = parseMCPFromProvider('claude', config)
     expect(result[0].env).toBeUndefined()
   })
 
@@ -660,7 +660,7 @@ describe('parseMCPFromProvider - edge cases', () => {
         s: { command: 'cmd', args: [], disabled: true, timeout: 5000 },
       },
     })
-    const result = parseMCPFromProvider('claudecode', config)
+    const result = parseMCPFromProvider('claude', config)
     expect(result[0]).toEqual({ name: 's', transport: 'stdio', command: 'cmd', args: [] })
     expect((result[0] as any).disabled).toBeUndefined()
     expect((result[0] as any).timeout).toBeUndefined()
@@ -673,8 +673,8 @@ describe('serializeMCPForProvider - concrete examples', () => {
     { name: 'server-b', transport: 'stdio', command: 'node', args: ['index.js'] },
   ]
 
-  it('serializes to mcpServers format for claudecode', () => {
-    const json = JSON.parse(serializeMCPForProvider('claudecode', servers))
+  it('serializes to mcpServers format for claude', () => {
+    const json = JSON.parse(serializeMCPForProvider('claude', servers))
     expect(json.mcpServers['server-a']).toEqual({
       command: 'npx',
       args: ['-y', '@pkg/a'],
@@ -711,8 +711,8 @@ describe('serializeMCPForProvider - concrete examples', () => {
     expect(mcpServers['server-b'].command).toBe('node')
   })
 
-  it('serializes to mcpServers format for gemini-cli', () => {
-    const json = JSON.parse(serializeMCPForProvider('gemini-cli', servers))
+  it('serializes to mcpServers format for gemini', () => {
+    const json = JSON.parse(serializeMCPForProvider('gemini', servers))
     expect(json.mcpServers).toBeDefined()
     expect(json.mcp).toBeUndefined()
   })
@@ -736,13 +736,13 @@ describe('serializeMCPForProvider - concrete examples', () => {
   })
 
   it('serializes empty server list', () => {
-    const json = JSON.parse(serializeMCPForProvider('claudecode', []))
+    const json = JSON.parse(serializeMCPForProvider('claude', []))
     expect(json.mcpServers).toEqual({})
   })
 
   it('omits env field when env is empty', () => {
     const s: CanonicalMCPServer[] = [{ name: 'x', transport: 'stdio', command: 'cmd', args: [], env: {} }]
-    const json = JSON.parse(serializeMCPForProvider('claudecode', s))
+    const json = JSON.parse(serializeMCPForProvider('claude', s))
     expect(json.mcpServers.x.env).toBeUndefined()
   })
 })

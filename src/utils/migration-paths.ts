@@ -10,17 +10,17 @@ const home = os.homedir()
  * Get MCP config file path for a provider at the given scope.
  *
  * Paths verified against official documentation:
- * - claudecode: ~/.claude.json (user scope) | .mcp.json (project scope)
+ * - claude: ~/.claude.json (user scope) | .mcp.json (project scope)
  * - kiro: ~/.kiro/settings/mcp.json | .kiro/settings/mcp.json
  * - opencode: ~/.config/opencode/opencode.json | opencode.json
  * - codex: ~/.codex/config.toml | .codex/config.toml
  * - qoder: MCP configured via IDE settings (mcpServers format)
- * - gemini-cli: ~/.gemini/settings.json | .gemini/settings.json
+ * - gemini: ~/.gemini/settings.json | .gemini/settings.json
  * - cursor: ~/.cursor/mcp.json | .cursor/mcp.json
  */
 export function getMCPConfigPath(provider: ProviderName, scope: MigrationScope, projectRoot: string): string {
   switch (provider) {
-    case 'claudecode':
+    case 'claude':
       // Official docs: user scope → ~/.claude.json, project scope → .mcp.json
       return scope === 'global'
         ? join(home, '.claude.json')
@@ -44,7 +44,7 @@ export function getMCPConfigPath(provider: ProviderName, scope: MigrationScope, 
       return scope === 'global'
         ? join(home, '.qoder', 'mcp.json')
         : join(projectRoot, '.qoder', 'mcp.json')
-    case 'gemini-cli':
+    case 'gemini':
       // Official docs: global → ~/.gemini/settings.json, project → .gemini/settings.json
       return scope === 'global'
         ? join(home, '.gemini', 'settings.json')
@@ -61,17 +61,17 @@ export function getMCPConfigPath(provider: ProviderName, scope: MigrationScope, 
  * Get the skills directory path for a provider at the given scope.
  *
  * Paths verified against official documentation:
- * - claudecode: ~/.claude/skills | .claude/skills (structured SKILL.md)
+ * - claude: ~/.claude/skills | .claude/skills (structured SKILL.md)
  * - kiro global: ~/.kiro/skills (structured) | .kiro/steering (flat)
  * - opencode: ~/.config/opencode/skills | .opencode/skills (structured SKILL.md)
- * - codex: no structured skills dir; uses AGENTS.md / instructions.md
+ * - codex: ~/.codex/skills | .codex/skills (structured SKILL.md)
  * - qoder: ~/.qoder/skills | .qoder/skills (structured SKILL.md)
- * - gemini-cli: uses GEMINI.md files, no structured skills dir
- * - cursor: no global skills; .cursor/rules (flat .md/.mdc files)
+ * - gemini: ~/.gemini/skills | .gemini/skills (structured SKILL.md)
+ * - cursor: ~/.cursor/skills | .cursor/skills (structured SKILL.md)
  */
 export function getSkillsDir(provider: ProviderName, scope: MigrationScope, projectRoot: string): string {
   switch (provider) {
-    case 'claudecode':
+    case 'claude':
       return scope === 'global'
         ? join(home, '.claude', 'skills')
         : join(projectRoot, '.claude', 'skills')
@@ -80,6 +80,7 @@ export function getSkillsDir(provider: ProviderName, scope: MigrationScope, proj
         ? join(home, '.kiro', 'skills')
         : join(projectRoot, '.kiro', 'steering')
     case 'opencode':
+      // Official docs: .opencode/skills/, ~/.config/opencode/skills/
       return scope === 'global'
         ? join(home, '.config', 'opencode', 'skills')
         : join(projectRoot, '.opencode', 'skills')
@@ -95,17 +96,16 @@ export function getSkillsDir(provider: ProviderName, scope: MigrationScope, proj
       return scope === 'global'
         ? join(home, '.qoder', 'skills')
         : join(projectRoot, '.qoder', 'skills')
-    case 'gemini-cli':
-      // Gemini CLI uses GEMINI.md files, not structured skills
-      // We use a placeholder dir for migration compatibility
+    case 'gemini':
+      // Official docs: ~/.gemini/skills/<name>/SKILL.md, .gemini/skills/<name>/SKILL.md
       return scope === 'global'
         ? join(home, '.gemini', 'skills')
         : join(projectRoot, '.gemini', 'skills')
     case 'cursor':
-      // Cursor: no global skills; project uses .cursor/rules/
+      // Official docs: .cursor/skills/<name>/SKILL.md (structured)
       return scope === 'global'
-        ? join(home, '.cursor', 'rules')
-        : join(projectRoot, '.cursor', 'rules')
+        ? join(home, '.cursor', 'skills')
+        : join(projectRoot, '.cursor', 'skills')
   }
 }
 
@@ -115,11 +115,13 @@ export function getSkillsDir(provider: ProviderName, scope: MigrationScope, proj
  * Flat = `*.md` files directly in the skills directory.
  */
 export function isStructuredSkills(provider: ProviderName, scope: MigrationScope): boolean {
-  if (provider === 'claudecode') return true
+  if (provider === 'claude') return true
   if (provider === 'kiro' && scope === 'global') return true
   if (provider === 'qoder') return true
   if (provider === 'opencode') return true
   if (provider === 'codex') return true
-  // cursor, gemini-cli, kiro project → flat
+  if (provider === 'gemini') return true // Official: .gemini/skills/<name>/SKILL.md
+  if (provider === 'cursor') return true // Official: .cursor/skills/<name>/SKILL.md
+  // kiro project → flat
   return false
 }

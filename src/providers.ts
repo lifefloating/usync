@@ -42,7 +42,7 @@ function openCodeGlobalDirs(): string[] {
 
 export const PROVIDERS: ProviderDefinition[] = [
   {
-    name: 'claudecode',
+    name: 'claude',
     targets(projectRoot: string) {
       return [
         t(join(home, '.claude.json'), 'settings', false, 'global MCP config'),
@@ -94,7 +94,7 @@ export const PROVIDERS: ProviderDefinition[] = [
     },
   },
   {
-    name: 'gemini-cli',
+    name: 'gemini',
     targets(projectRoot: string) {
       return [
         t(join(home, '.gemini', 'settings.json'), 'settings', false, 'global settings'),
@@ -134,8 +134,10 @@ export const PROVIDERS: ProviderDefinition[] = [
       return [
         t(join(home, '.cursor', 'mcp.json'), 'settings', false, 'global mcp config'),
         t(join(home, '.cursor', 'rules'), 'skills', true, 'global rules'),
+        t(join(home, '.cursor', 'skills'), 'skills', true, 'global skills'),
         t(join(projectRoot, '.cursor', 'mcp.json'), 'settings', false, 'project mcp config'),
         t(join(projectRoot, '.cursor', 'rules'), 'skills', true, 'project rules'),
+        t(join(projectRoot, '.cursor', 'skills'), 'skills', true, 'project skills'),
       ]
     },
   },

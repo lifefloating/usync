@@ -17,7 +17,7 @@ function findProvider(name: ProviderName) {
 // ============================================================
 
 describe('PROVIDERS registry', () => {
-  const ALL: ProviderName[] = ['claudecode', 'opencode', 'codex', 'gemini-cli', 'kiro', 'qoder', 'cursor']
+  const ALL: ProviderName[] = ['claude', 'opencode', 'codex', 'gemini', 'kiro', 'qoder', 'cursor']
 
   it('contains all 7 providers', () => {
     expect(PROVIDERS.length).toBe(7)
@@ -39,11 +39,11 @@ describe('PROVIDERS registry', () => {
 })
 
 // ============================================================
-// claudecode provider
+// claude provider
 // ============================================================
 
-describe('claudecode provider', () => {
-  const targets = findProvider('claudecode').targets(projectRoot)
+describe('claude provider', () => {
+  const targets = findProvider('claude').targets(projectRoot)
 
   describe('global targets', () => {
     it('has ~/.claude.json as global MCP config (settings, file)', () => {
@@ -252,11 +252,11 @@ describe('codex provider', () => {
 })
 
 // ============================================================
-// gemini-cli provider
+// gemini provider
 // ============================================================
 
-describe('gemini-cli provider', () => {
-  const targets = findProvider('gemini-cli').targets(projectRoot)
+describe('gemini provider', () => {
+  const targets = findProvider('gemini').targets(projectRoot)
 
   describe('global targets', () => {
     it('has ~/.gemini/settings.json as global settings (settings, file)', () => {
@@ -418,6 +418,13 @@ describe('cursor provider', () => {
       expect(t!.category).toBe('skills')
       expect(t!.isDirectory).toBe(true)
     })
+
+    it('has ~/.cursor/skills as global skills (skills, directory)', () => {
+      const t = targets.find(t => t.absolutePath === join(home, '.cursor', 'skills'))
+      expect(t).toBeDefined()
+      expect(t!.category).toBe('skills')
+      expect(t!.isDirectory).toBe(true)
+    })
   })
 
   describe('project targets', () => {
@@ -434,10 +441,17 @@ describe('cursor provider', () => {
       expect(t!.category).toBe('skills')
       expect(t!.isDirectory).toBe(true)
     })
+
+    it('has .cursor/skills as project skills (skills, directory)', () => {
+      const t = targets.find(t => t.absolutePath === join(projectRoot, '.cursor', 'skills'))
+      expect(t).toBeDefined()
+      expect(t!.category).toBe('skills')
+      expect(t!.isDirectory).toBe(true)
+    })
   })
 
-  it('has 4 targets total', () => {
-    expect(targets.length).toBe(4)
+  it('has 6 targets total', () => {
+    expect(targets.length).toBe(6)
   })
 })
 
@@ -469,15 +483,15 @@ describe('resolveProviders', () => {
   })
 
   it('filters to multiple comma-separated providers', () => {
-    const result = resolveProviders('claudecode,kiro,cursor')
+    const result = resolveProviders('claude,kiro,cursor')
     expect(result.length).toBe(3)
-    expect(result.map(p => p.name).sort()).toEqual(['claudecode', 'cursor', 'kiro'])
+    expect(result.map(p => p.name).sort()).toEqual(['claude', 'cursor', 'kiro'])
   })
 
   it('handles whitespace around commas', () => {
-    const result = resolveProviders('codex , gemini-cli')
+    const result = resolveProviders('codex , gemini')
     expect(result.length).toBe(2)
-    expect(result.map(p => p.name).sort()).toEqual(['codex', 'gemini-cli'])
+    expect(result.map(p => p.name).sort()).toEqual(['codex', 'gemini'])
   })
 
   it('returns empty array for unknown provider name', () => {
@@ -533,11 +547,11 @@ describe('provider target categories', () => {
     }
   })
 
-  it('only claudecode has teams category', () => {
+  it('only claude has teams category', () => {
     for (const p of PROVIDERS) {
       const targets = p.targets(projectRoot)
       const teams = targets.filter(t => t.category === 'teams')
-      if (p.name === 'claudecode') {
+      if (p.name === 'claude') {
         expect(teams.length).toBeGreaterThan(0)
       } else {
         expect(teams.length, `${p.name} should not have teams targets`).toBe(0)
@@ -545,11 +559,11 @@ describe('provider target categories', () => {
     }
   })
 
-  it('only gemini-cli has other category', () => {
+  it('only gemini has other category', () => {
     for (const p of PROVIDERS) {
       const targets = p.targets(projectRoot)
       const other = targets.filter(t => t.category === 'other')
-      if (p.name === 'gemini-cli') {
+      if (p.name === 'gemini') {
         expect(other.length).toBeGreaterThan(0)
       } else {
         expect(other.length, `${p.name} should not have other targets`).toBe(0)
@@ -583,8 +597,8 @@ describe('provider target categories', () => {
 // ============================================================
 
 describe('global vs project path separation', () => {
-  it('claudecode: global targets use home dir, project targets use projectRoot', () => {
-    const targets = findProvider('claudecode').targets(projectRoot)
+  it('claude: global targets use home dir, project targets use projectRoot', () => {
+    const targets = findProvider('claude').targets(projectRoot)
     // Global MCP config is ~/.claude.json (home-based)
     const globalMcp = targets.find(t => t.absolutePath === join(home, '.claude.json'))
     expect(globalMcp).toBeDefined()
@@ -637,10 +651,10 @@ describe('global vs project path separation', () => {
 // ============================================================
 
 describe('templatePathToOutputPath', () => {
-  it('claudecode: strips .claude/ prefix, alias = claude', () => {
-    expect(templatePathToOutputPath('$HOME/.claude/settings.json', 'claudecode'))
+  it('claude: strips .claude/ prefix, alias = claude', () => {
+    expect(templatePathToOutputPath('$HOME/.claude/settings.json', 'claude'))
       .toBe('home/claude/settings.json')
-    expect(templatePathToOutputPath('$PROJECT/.claude/skills/foo.md', 'claudecode'))
+    expect(templatePathToOutputPath('$PROJECT/.claude/skills/foo.md', 'claude'))
       .toBe('project/claude/skills/foo.md')
   })
 
@@ -656,10 +670,10 @@ describe('templatePathToOutputPath', () => {
       .toBe('project/codex/skills/s.md')
   })
 
-  it('gemini-cli: strips .gemini/ prefix, alias = gemini', () => {
-    expect(templatePathToOutputPath('$HOME/.gemini/settings.json', 'gemini-cli'))
+  it('gemini: strips .gemini/ prefix, alias = gemini', () => {
+    expect(templatePathToOutputPath('$HOME/.gemini/settings.json', 'gemini'))
       .toBe('home/gemini/settings.json')
-    expect(templatePathToOutputPath('$PROJECT/.gemini/skills/g.md', 'gemini-cli'))
+    expect(templatePathToOutputPath('$PROJECT/.gemini/skills/g.md', 'gemini'))
       .toBe('project/gemini/skills/g.md')
   })
 
@@ -680,7 +694,7 @@ describe('templatePathToOutputPath', () => {
   it('cursor: strips .cursor/ prefix', () => {
     expect(templatePathToOutputPath('$HOME/.cursor/mcp.json', 'cursor'))
       .toBe('home/cursor/mcp.json')
-    expect(templatePathToOutputPath('$PROJECT/.cursor/rules/style.md', 'cursor'))
-      .toBe('project/cursor/rules/style.md')
+    expect(templatePathToOutputPath('$PROJECT/.cursor/skills/style.md', 'cursor'))
+      .toBe('project/cursor/skills/style.md')
   })
 })

@@ -111,7 +111,7 @@ export async function readMigrationData(
   const skills = allSkills.filter(s => !isSystemSkillPath(s.relativePath))
 
   // Claude Code also reads CLAUDE.md from project root (project scope only)
-  if (provider === 'claudecode' && scope === 'project') {
+  if (provider === 'claude' && scope === 'project') {
     const claudeMdPath = join(projectRoot, 'CLAUDE.md')
     if (await exists(claudeMdPath)) {
       const content = await fs.readFile(claudeMdPath, 'utf-8')
@@ -127,7 +127,7 @@ export async function readMigrationData(
  * Servers with headers migrated to unsupported providers will be skipped.
  */
 const HEADERS_SUPPORTED_PROVIDERS = new Set<ProviderName>([
-  'claudecode', 'opencode', 'codex', 'gemini-cli', 'kiro', 'cursor',
+  'claude', 'opencode', 'codex', 'gemini', 'kiro', 'cursor',
 ])
 
 export interface PreparedMigrationResult {
@@ -250,17 +250,17 @@ export async function writeMigrationData(
       existingConfig.mcp_servers = serversObj
     }
     else {
-      // Standard mcpServers format (claudecode, kiro, qoder, gemini-cli, cursor)
+      // Standard mcpServers format (claude, kiro, qoder, gemini, cursor)
       const serversObj: Record<string, Record<string, unknown>> = {}
       for (const server of data.mcpServers) {
         const entry: Record<string, unknown> = {}
         if (server.transport === 'url') {
-          if (provider === 'claudecode') {
+          if (provider === 'claude') {
             // Claude Code requires "type": "http" for URL-based servers
             entry.type = 'http'
             entry.url = server.url
           }
-          else if (provider === 'gemini-cli') {
+          else if (provider === 'gemini') {
             // Gemini CLI uses "httpUrl" for HTTP streaming transport
             entry.httpUrl = server.url
           }

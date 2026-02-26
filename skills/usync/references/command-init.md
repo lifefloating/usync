@@ -22,10 +22,10 @@ usync init [options]
 
 When run without flags in a TTY environment, `init` enters interactive mode:
 
-1. **Token prompt** — If no token found via flags/env, prompts for password input
-2. **Token verification** — Validates the token against GitHub API
-3. **Gist selection** — Choose between existing Gist ID or creating a new one
-4. **Confirmation** — Displays Gist ID and URL
+1. **Token prompt** → If no token found via flags/env, prompts for password input
+2. **Token verification** → Validates the token against GitHub API
+3. **Gist selection** → Choose between existing Gist ID or creating a new one
+4. **Confirmation** → Displays Gist ID and URL
 
 In CI/non-TTY environments, all values must be provided via flags or env vars.
 

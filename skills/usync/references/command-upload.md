@@ -26,9 +26,9 @@ usync upload [options]
 
 Upload uses a manifest (`usync-manifest.v1.json`) stored in the Gist to track file hashes. Only changed files are uploaded on subsequent runs:
 
-- **Changed** — Files with different content hash
-- **Deleted** — Files in manifest that no longer exist locally
-- **Unchanged** — Files with matching hash (skipped)
+- **Changed** → Files with different content hash
+- **Deleted** → Files in manifest that no longer exist locally
+- **Unchanged** → Files with matching hash (skipped)
 
 ## Watch Mode
 
@@ -52,8 +52,8 @@ usync upload --gist-id abc123
 # Create new Gist and upload
 usync upload
 
-# Upload only ClaudeCode configs
-usync upload --gist-id abc123 --providers claudecode
+# Upload only Claude configs
+usync upload --gist-id abc123 --providers Claude
 
 # Watch mode with 30s interval
 usync upload --gist-id abc123 --watch --interval 30

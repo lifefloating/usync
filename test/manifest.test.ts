@@ -21,7 +21,7 @@ describe('parseManifestFromGist', () => {
       generator: 'usync-cli@0.1.0',
       items: {
         '$HOME/.claude/settings.json': {
-          provider: 'claudecode',
+          provider: 'claude',
           category: 'settings',
           hash: 'abc123',
           size: 100,
@@ -37,7 +37,7 @@ describe('parseManifestFromGist', () => {
     const result = parseManifestFromGist(gist as any)
     expect(result).not.toBeNull()
     expect(result!.version).toBe(1)
-    expect(result!.items['$HOME/.claude/settings.json'].provider).toBe('claudecode')
+    expect(result!.items['$HOME/.claude/settings.json'].provider).toBe('claude')
   })
 
   it('returns null for missing manifest file', () => {

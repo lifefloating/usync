@@ -46,20 +46,20 @@ export function templatePathToPortablePath(templatePath: string): string {
 }
 
 const PROVIDER_PREFIXES: Record<ProviderName, string[]> = {
-  'claudecode': ['.claude/'],
+  'claude': ['.claude/'],
   'opencode': ['.config/opencode/', 'AppData/Roaming/opencode/'],
   'codex': ['.codex/'],
-  'gemini-cli': ['.gemini/'],
+  'gemini': ['.gemini/'],
   'kiro': ['.kiro/'],
   'qoder': ['.qoder/'],
   'cursor': ['.cursor/'],
 }
 
 const PROVIDER_ALIASES: Record<ProviderName, string> = {
-  'claudecode': 'claude',
+  'claude': 'claude',
   'opencode': 'opencode',
   'codex': 'codex',
-  'gemini-cli': 'gemini',
+  'gemini': 'gemini',
   'kiro': 'kiro',
   'qoder': 'qoder',
   'cursor': 'cursor',

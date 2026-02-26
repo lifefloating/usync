@@ -55,10 +55,10 @@ function parseConfigContent(provider: ProviderName, configContent: string): Reco
  * Get the MCP servers object from a parsed config, handling provider-specific field paths.
  *
  * Provider formats (from official docs):
- * - claudecode: { mcpServers: { ... } } (both ~/.claude.json and .mcp.json)
+ * - claude: { mcpServers: { ... } } (both ~/.claude.json and .mcp.json)
  * - codex: [mcp_servers] in TOML
  * - opencode: { mcp: { <name>: { type, command, ... } } } — servers are direct children of mcp
- * - gemini-cli: { mcpServers: { ... } }
+ * - gemini: { mcpServers: { ... } }
  * - kiro: { mcpServers: { ... } }
  * - qoder: { mcpServers: { ... } }
  * - cursor: { mcpServers: { ... } }
@@ -179,7 +179,7 @@ function parseHeadersField(value: unknown): Record<string, string> | undefined {
   return Object.keys(headers).length > 0 ? headers : undefined
 }
 
-/** Parse a standard server entry (claudecode, kiro, qoder, gemini-cli, cursor) */
+/** Parse a standard server entry (claude, kiro, qoder, gemini, cursor) */
 function parseStandardServer(name: string, entry: Record<string, unknown>): CanonicalMCPServer {
   const server: CanonicalMCPServer = { name, transport: 'stdio' }
 
@@ -320,12 +320,12 @@ export function serializeMCPForProvider(provider: ProviderName, servers: Canonic
   for (const server of servers) {
     const entry: Record<string, unknown> = {}
     if (server.transport === 'url') {
-      if (provider === 'claudecode') {
+      if (provider === 'claude') {
         // Claude Code requires "type": "http" for URL-based servers
         entry.type = 'http'
         entry.url = server.url
       }
-      else if (provider === 'gemini-cli') {
+      else if (provider === 'gemini') {
         // Gemini CLI uses "httpUrl" for HTTP streaming transport
         entry.httpUrl = server.url
       }

@@ -8,7 +8,7 @@ import type { MigrationData, SkillFile } from '../src/utils/migration-adapter.js
 import type { CanonicalMCPServer } from '../src/utils/mcp.js'
 import type { ProviderName } from '../src/types.js'
 
-const ALL_PROVIDERS: ProviderName[] = ['claudecode', 'opencode', 'codex', 'gemini-cli', 'kiro', 'qoder', 'cursor']
+const ALL_PROVIDERS: ProviderName[] = ['claude', 'opencode', 'codex', 'gemini', 'kiro', 'qoder', 'cursor']
 
 let testDir: string
 
@@ -24,13 +24,13 @@ afterEach(async () => {
 /** Map provider to its project-level skills directory relative path */
 function skillsDirRel(provider: ProviderName): string {
   switch (provider) {
-    case 'claudecode': return '.claude/skills'
+    case 'claude': return '.claude/skills'
     case 'kiro': return '.kiro/steering'
     case 'opencode': return '.opencode/skills'
     case 'codex': return '.codex/skills'
     case 'qoder': return '.qoder/skills'
-    case 'gemini-cli': return '.gemini/skills'
-    case 'cursor': return '.cursor/rules'
+    case 'gemini': return '.gemini/skills'
+    case 'cursor': return '.cursor/skills'
   }
 }
 
@@ -77,7 +77,7 @@ describe('Migration Plan - conflict detection property tests', () => {
               skills: items.map((i) => ({ relativePath: i.name, content: '# New' })),
             }
 
-            const plan = await buildMigrationPlan('claudecode', provider, 'project', data, iterDir)
+            const plan = await buildMigrationPlan('claude', provider, 'project', data, iterDir)
 
             for (const item of items) {
               const targetPath = join(skillsDir, item.name)
@@ -103,8 +103,8 @@ describe('buildMigrationPlan - unit tests', () => {
     const root = join(testDir, 'empty-plan')
     await fs.mkdir(root, { recursive: true })
 
-    const plan = await buildMigrationPlan('claudecode', 'kiro', 'project', { mcpServers: [], skills: [] }, root)
-    expect(plan.from).toBe('claudecode')
+    const plan = await buildMigrationPlan('claude', 'kiro', 'project', { mcpServers: [], skills: [] }, root)
+    expect(plan.from).toBe('claude')
     expect(plan.to).toBe('kiro')
     expect(plan.scope).toBe('project')
     expect(plan.items).toEqual([])
@@ -118,7 +118,7 @@ describe('buildMigrationPlan - unit tests', () => {
       mcpServers: [{ name: 'srv', transport: 'stdio', command: 'cmd', args: [] }],
       skills: [],
     }
-    const plan = await buildMigrationPlan('claudecode', 'kiro', 'project', data, root)
+    const plan = await buildMigrationPlan('claude', 'kiro', 'project', data, root)
     expect(plan.items).toHaveLength(1)
     expect(plan.items[0].action).toBe('create')
   })
@@ -132,7 +132,7 @@ describe('buildMigrationPlan - unit tests', () => {
       mcpServers: [{ name: 'srv', transport: 'stdio', command: 'cmd', args: [] }],
       skills: [],
     }
-    const plan = await buildMigrationPlan('claudecode', 'kiro', 'project', data, root)
+    const plan = await buildMigrationPlan('claude', 'kiro', 'project', data, root)
     expect(plan.items).toHaveLength(1)
     expect(plan.items[0].action).toBe('conflict')
   })
@@ -149,7 +149,7 @@ describe('buildMigrationPlan - unit tests', () => {
         { relativePath: 'brand-new.md', content: 'fresh' },
       ],
     }
-    const plan = await buildMigrationPlan('claudecode', 'kiro', 'project', data, root)
+    const plan = await buildMigrationPlan('claude', 'kiro', 'project', data, root)
     expect(plan.items).toHaveLength(2)
 
     const existingItem = plan.items.find((i) => i.targetPath.includes('existing.md'))
@@ -168,7 +168,7 @@ describe('executeMigrationPlan - unit tests', () => {
       mcpServers: [],
       skills: [{ relativePath: 'new-skill.md', content: '# New Skill' }],
     }
-    const plan = await buildMigrationPlan('claudecode', 'kiro', 'project', data, root)
+    const plan = await buildMigrationPlan('claude', 'kiro', 'project', data, root)
     await executeMigrationPlan(plan, data, root)
 
     const content = await fs.readFile(join(root, '.kiro', 'steering', 'new-skill.md'), 'utf-8')
@@ -184,7 +184,7 @@ describe('executeMigrationPlan - unit tests', () => {
       mcpServers: [],
       skills: [{ relativePath: 'keep.md', content: 'overwritten' }],
     }
-    const plan = await buildMigrationPlan('claudecode', 'kiro', 'project', data, root)
+    const plan = await buildMigrationPlan('claude', 'kiro', 'project', data, root)
     plan.items[0].action = 'skip'
     await executeMigrationPlan(plan, data, root)
 
