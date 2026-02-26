@@ -16,7 +16,8 @@ const serverNameArb = fc.stringMatching(/^[a-z][a-z0-9-]{0,19}$/)
 /**
  * Generator for a non-empty command string.
  */
-const commandArb = fc.stringMatching(/^[a-z][\w./-]{0,29}$/i)
+// eslint-disable-next-line regexp/use-ignore-case
+const commandArb = fc.stringMatching(/^[a-zA-Z][\w./-]{0,29}$/)
 
 /**
  * Generator for a single arg string (non-empty, no control chars).

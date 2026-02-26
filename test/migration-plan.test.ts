@@ -199,7 +199,8 @@ describe('executeMigrationPlan - unit tests', () => {
 // ============================================================
 
 const serverNameArb = fc.stringMatching(/^[a-z][a-z0-9-]{0,19}$/)
-const commandArb = fc.stringMatching(/^[a-z][\w./-]{0,29}$/i)
+// eslint-disable-next-line regexp/use-ignore-case
+const commandArb = fc.stringMatching(/^[a-zA-Z][\w./-]{0,29}$/)
 const argArb = fc.stringMatching(/^[\w@./:=-]{1,30}$/)
 const envKeyArb = fc.stringMatching(/^[A-Z][A-Z0-9_]{0,19}$/)
 const envValueArb = fc.stringMatching(/^[\w./-]{1,30}$/)
