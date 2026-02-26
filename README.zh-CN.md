@@ -40,7 +40,7 @@ npm run build
 
 ```bash
 # 1) 扫描本地可同步文件
-npx usync scan
+npx usync-cli scan
 
 # 1.1) 验证 token 与 gist 访问
 npx usync init --token <GITHUB_PAT> --gist-id <GIST_ID>

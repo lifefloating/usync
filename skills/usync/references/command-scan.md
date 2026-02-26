@@ -5,7 +5,7 @@ Scan and list all discovered local config files without requiring authentication
 ## Usage
 
 ```bash
-usync scan [options]
+usync-cli scan [options]
 ```
 
 ## Options
@@ -35,11 +35,11 @@ Scan result: 7 files
 
 ```bash
 # Scan all providers
-usync scan
+usync-cli scan
 
 # Scan only Claude configs
 usync scan --providers Claude
 
 # Scan with custom project root
-usync scan --cwd /path/to/project
+usync-cli scan --cwd /path/to/project
 ```

@@ -71,7 +71,7 @@ usync upload --gist-id <id> --watch
 
 ## Token Setup
 
-usync requires a GitHub Personal Access Token with `gist` scope:
+usync-cli requires a GitHub Personal Access Token with `gist` scope:
 
 1. Go to https://github.com/settings/tokens/new
 2. Select scope: **gist**
@@ -91,23 +91,23 @@ Token resolution order:
 export GITHUB_TOKEN=ghp_xxx
 
 # Initialize and create a new Gist
-usync init
+usync-cli init
 
 # Upload all configs
-usync upload --gist-id <id-from-init>
+usync-cli upload --gist-id <id-from-init>
 ```
 
 ### Restore on new machine
 
 ```bash
 export GITHUB_TOKEN=ghp_xxx
-usync download --gist-id <id>
+usync-cli download --gist-id <id>
 ```
 
 ### Watch mode for continuous sync
 
 ```bash
-usync upload --gist-id <id> --watch --interval 30
+usync-cli upload --gist-id <id> --watch --interval 30
 ```
 
 ### Filter specific providers

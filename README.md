@@ -46,7 +46,7 @@ npm run build
 
 ```bash
 # 1) Scan discovered files
-npx usync scan
+npx usync-cli scan
 
 # 1.1) Validate token and gist access
 npx usync init --token <GITHUB_PAT> --gist-id <GIST_ID>

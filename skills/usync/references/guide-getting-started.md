@@ -29,7 +29,7 @@ npx usync-cli
 export GITHUB_TOKEN=ghp_xxxxxxxxxxxx
 
 # Option 2: Pass directly (not recommended for scripts)
-usync init --token ghp_xxxxxxxxxxxx
+usync-cli init --token ghp_xxxxxxxxxxxx
 ```
 
 ## First Sync
@@ -50,13 +50,13 @@ usync upload --gist-id <id>
 
 ```bash
 export GITHUB_TOKEN=ghp_xxxxxxxxxxxx
-usync download --gist-id <id>
+usync-cli download --gist-id <id>
 ```
 
 ## Continuous Sync
 
 ```bash
-usync upload --gist-id <id> --watch
+usync-cli upload --gist-id <id> --watch
 ```
 
 ## Provider Filtering
