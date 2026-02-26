@@ -1,12 +1,12 @@
+import type { ProviderName } from '../types.js'
+import type { MigrationScope } from '../utils/migration-paths.js'
 import process from 'node:process'
 import * as p from '@clack/prompts'
 import { defineCommand } from 'citty'
 import { cyan, gray, green, yellow } from 'colorette'
 import { consola } from 'consola'
 import { resolve } from 'pathe'
-import type { ProviderName } from '../types.js'
-import type { MigrationScope } from '../utils/migration-paths.js'
-import { readMigrationData, prepareMigrationData } from '../utils/migration-adapter.js'
+import { prepareMigrationData, readMigrationData } from '../utils/migration-adapter.js'
 import { buildMigrationPlan, executeMigrationPlan } from '../utils/migration-plan.js'
 
 const ALL_PROVIDERS: ProviderName[] = ['claude', 'opencode', 'codex', 'gemini', 'kiro', 'qoder', 'cursor']
@@ -25,13 +25,13 @@ export default defineCommand({
     description: 'Migrate MCP configs and skills between AI coding tools',
   },
   args: {
-    from: { type: 'string', alias: 'f', description: 'Source provider' },
-    to: { type: 'string', alias: 't', description: 'Target provider' },
-    scope: { type: 'string', alias: 's', description: 'Migration scope: global or project' },
-    cwd: { type: 'string', alias: 'C', description: 'Project root directory (for project scope)' },
+    'from': { type: 'string', alias: 'f', description: 'Source provider' },
+    'to': { type: 'string', alias: 't', description: 'Target provider' },
+    'scope': { type: 'string', alias: 's', description: 'Migration scope: global or project' },
+    'cwd': { type: 'string', alias: 'C', description: 'Project root directory (for project scope)' },
     'dry-run': { type: 'boolean', alias: 'n', default: false, description: 'Preview changes without writing' },
-    overwrite: { type: 'boolean', alias: 'w', default: false, description: 'Overwrite existing files (default: skip conflicts)' },
-    yes: { type: 'boolean', alias: 'y', default: false, description: 'Skip confirmation prompts' },
+    'overwrite': { type: 'boolean', alias: 'w', default: false, description: 'Overwrite existing files (default: skip conflicts)' },
+    'yes': { type: 'boolean', alias: 'y', default: false, description: 'Skip confirmation prompts' },
   },
   async run({ args }) {
     p.intro(cyan('usync migrate'))
@@ -248,9 +248,12 @@ export default defineCommand({
     const overwritten = plan.items.filter(i => i.action === 'conflict').length
     const skipped = plan.items.filter(i => i.action === 'skip').length
 
-    if (created > 0) consola.log(`  ${green(`Created: ${created}`)}`)
-    if (overwritten > 0) consola.log(`  ${yellow(`Overwritten: ${overwritten}`)}`)
-    if (skipped > 0) consola.log(`  ${gray(`Skipped: ${skipped}`)}`)
+    if (created > 0)
+      consola.log(`  ${green(`Created: ${created}`)}`)
+    if (overwritten > 0)
+      consola.log(`  ${yellow(`Overwritten: ${overwritten}`)}`)
+    if (skipped > 0)
+      consola.log(`  ${gray(`Skipped: ${skipped}`)}`)
 
     p.outro('Done!')
   },

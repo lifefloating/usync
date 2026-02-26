@@ -3,8 +3,8 @@ import type { MigrationData } from './migration-adapter.js'
 import type { MigrationScope } from './migration-paths.js'
 import { join } from 'pathe'
 import { exists } from './fs.js'
-import { getMCPConfigPath, getSkillsDir } from './migration-paths.js'
 import { writeMigrationData } from './migration-adapter.js'
+import { getMCPConfigPath, getSkillsDir } from './migration-paths.js'
 
 export type MigrationAction = 'create' | 'skip' | 'conflict'
 

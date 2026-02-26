@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import type { ProviderName } from '../src/types.js'
 import os from 'node:os'
 import { join } from 'pathe'
+import { describe, expect, it } from 'vitest'
 import { PROVIDERS, resolveProviders } from '../src/providers.js'
 import { templatePathToOutputPath } from '../src/utils/path.js'
-import type { ProviderName } from '../src/types.js'
 
 const home = os.homedir()
 const projectRoot = '/tmp/test-project'
@@ -16,7 +16,7 @@ function findProvider(name: ProviderName) {
 // All 7 providers are registered
 // ============================================================
 
-describe('PROVIDERS registry', () => {
+describe('pROVIDERS registry', () => {
   const ALL: ProviderName[] = ['claude', 'opencode', 'codex', 'gemini', 'kiro', 'qoder', 'cursor']
 
   it('contains all 7 providers', () => {
@@ -177,7 +177,6 @@ describe('opencode provider', () => {
     })
   })
 })
-
 
 // ============================================================
 // codex provider
@@ -455,7 +454,6 @@ describe('cursor provider', () => {
   })
 })
 
-
 // ============================================================
 // resolveProviders
 // ============================================================
@@ -553,7 +551,8 @@ describe('provider target categories', () => {
       const teams = targets.filter(t => t.category === 'teams')
       if (p.name === 'claude') {
         expect(teams.length).toBeGreaterThan(0)
-      } else {
+      }
+      else {
         expect(teams.length, `${p.name} should not have teams targets`).toBe(0)
       }
     }
@@ -565,7 +564,8 @@ describe('provider target categories', () => {
       const other = targets.filter(t => t.category === 'other')
       if (p.name === 'gemini') {
         expect(other.length).toBeGreaterThan(0)
-      } else {
+      }
+      else {
         expect(other.length, `${p.name} should not have other targets`).toBe(0)
       }
     }

@@ -115,13 +115,20 @@ export function getSkillsDir(provider: ProviderName, scope: MigrationScope, proj
  * Flat = `*.md` files directly in the skills directory.
  */
 export function isStructuredSkills(provider: ProviderName, scope: MigrationScope): boolean {
-  if (provider === 'claude') return true
-  if (provider === 'kiro' && scope === 'global') return true
-  if (provider === 'qoder') return true
-  if (provider === 'opencode') return true
-  if (provider === 'codex') return true
-  if (provider === 'gemini') return true // Official: .gemini/skills/<name>/SKILL.md
-  if (provider === 'cursor') return true // Official: .cursor/skills/<name>/SKILL.md
+  if (provider === 'claude')
+    return true
+  if (provider === 'kiro' && scope === 'global')
+    return true
+  if (provider === 'qoder')
+    return true
+  if (provider === 'opencode')
+    return true
+  if (provider === 'codex')
+    return true
+  if (provider === 'gemini')
+    return true // Official: .gemini/skills/<name>/SKILL.md
+  if (provider === 'cursor')
+    return true // Official: .cursor/skills/<name>/SKILL.md
   // kiro project → flat
   return false
 }

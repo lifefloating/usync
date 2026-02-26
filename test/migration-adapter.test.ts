@@ -1,10 +1,10 @@
-import { describe, expect, it, beforeEach, afterEach } from 'vitest'
-import fc from 'fast-check'
-import fs from 'node:fs/promises'
-import { join } from 'pathe'
-import { tmpdir } from 'node:os'
-import { readMigrationData, writeMigrationData } from '../src/utils/migration-adapter.js'
 import type { ProviderName } from '../src/types.js'
+import fs from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import fc from 'fast-check'
+import { join } from 'pathe'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { readMigrationData, writeMigrationData } from '../src/utils/migration-adapter.js'
 
 const ALL_PROVIDERS: ProviderName[] = ['claude', 'opencode', 'codex', 'gemini', 'kiro', 'qoder', 'cursor']
 
@@ -31,9 +31,9 @@ const markdownContentArb = fc.array(
     fc.string({ minLength: 1, maxLength: 50 }),
   ),
   { minLength: 1, maxLength: 10 },
-).map((parts) => parts.join(''))
+).map(parts => parts.join(''))
 
-describe('Migration Adapter - Skills content property tests', () => {
+describe('migration Adapter - Skills content property tests', () => {
   /**
    * **Feature: tool-migration, Property 4: Skills 内容在迁移过程中保持不变**
    * **Validates: Requirements 4.7**
@@ -52,11 +52,12 @@ describe('Migration Adapter - Skills content property tests', () => {
           ).map((skills) => {
             const seen = new Set<string>()
             return skills.filter((s) => {
-              if (seen.has(s.relativePath)) return false
+              if (seen.has(s.relativePath))
+                return false
               seen.add(s.relativePath)
               return true
             })
-          }).filter((skills) => skills.length > 0),
+          }).filter(skills => skills.length > 0),
           async (skills) => {
             const iterDir = join(testDir, `iter-${Math.random().toString(36).slice(2)}`)
             await fs.mkdir(iterDir, { recursive: true })
@@ -65,7 +66,7 @@ describe('Migration Adapter - Skills content property tests', () => {
             const result = await readMigrationData(provider, 'project', iterDir)
 
             for (const original of skills) {
-              const found = result.skills.find((s) => s.relativePath === original.relativePath)
+              const found = result.skills.find(s => s.relativePath === original.relativePath)
               expect(found).toBeDefined()
               expect(found!.content).toBe(original.content)
             }
@@ -76,7 +77,6 @@ describe('Migration Adapter - Skills content property tests', () => {
     },
   )
 })
-
 
 describe('readMigrationData - skills read paths (project scope)', () => {
   it('reads CLAUDE.md and .claude/skills/ for claude', async () => {

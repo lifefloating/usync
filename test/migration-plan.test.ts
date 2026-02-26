@@ -1,12 +1,12 @@
-import { describe, expect, it, beforeEach, afterEach } from 'vitest'
-import fc from 'fast-check'
-import fs from 'node:fs/promises'
-import { join } from 'pathe'
-import { tmpdir } from 'node:os'
-import { buildMigrationPlan, executeMigrationPlan } from '../src/utils/migration-plan.js'
-import type { MigrationData, SkillFile } from '../src/utils/migration-adapter.js'
-import type { CanonicalMCPServer } from '../src/utils/mcp.js'
 import type { ProviderName } from '../src/types.js'
+import type { CanonicalMCPServer } from '../src/utils/mcp.js'
+import type { MigrationData, SkillFile } from '../src/utils/migration-adapter.js'
+import fs from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import fc from 'fast-check'
+import { join } from 'pathe'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { buildMigrationPlan, executeMigrationPlan } from '../src/utils/migration-plan.js'
 
 const ALL_PROVIDERS: ProviderName[] = ['claude', 'opencode', 'codex', 'gemini', 'kiro', 'qoder', 'cursor']
 
@@ -36,7 +36,7 @@ function skillsDirRel(provider: ProviderName): string {
 
 const skillNameArb = fc.stringMatching(/^[a-z][a-z0-9-]{0,14}\.md$/)
 
-describe('Migration Plan - conflict detection property tests', () => {
+describe('migration Plan - conflict detection property tests', () => {
   /**
    * **Feature: tool-migration, Property 5: 已存在的目标文件在 Migration Plan 中标记为冲突**
    * **Validates: Requirements 4.8**
@@ -55,11 +55,12 @@ describe('Migration Plan - conflict detection property tests', () => {
           ).map((items) => {
             const seen = new Set<string>()
             return items.filter((i) => {
-              if (seen.has(i.name)) return false
+              if (seen.has(i.name))
+                return false
               seen.add(i.name)
               return true
             })
-          }).filter((items) => items.length > 0),
+          }).filter(items => items.length > 0),
           async (items) => {
             const iterDir = join(testDir, `iter-${Math.random().toString(36).slice(2)}`)
             await fs.mkdir(iterDir, { recursive: true })
@@ -74,14 +75,14 @@ describe('Migration Plan - conflict detection property tests', () => {
 
             const data: MigrationData = {
               mcpServers: [],
-              skills: items.map((i) => ({ relativePath: i.name, content: '# New' })),
+              skills: items.map(i => ({ relativePath: i.name, content: '# New' })),
             }
 
             const plan = await buildMigrationPlan('claude', provider, 'project', data, iterDir)
 
             for (const item of items) {
               const targetPath = join(skillsDir, item.name)
-              const planItem = plan.items.find((p) => p.targetPath === targetPath)
+              const planItem = plan.items.find(p => p.targetPath === targetPath)
               expect(planItem).toBeDefined()
               if (item.preExist) {
                 expect(planItem!.action).toBe('conflict')
@@ -152,8 +153,8 @@ describe('buildMigrationPlan - unit tests', () => {
     const plan = await buildMigrationPlan('claude', 'kiro', 'project', data, root)
     expect(plan.items).toHaveLength(2)
 
-    const existingItem = plan.items.find((i) => i.targetPath.includes('existing.md'))
-    const newItem = plan.items.find((i) => i.targetPath.includes('brand-new.md'))
+    const existingItem = plan.items.find(i => i.targetPath.includes('existing.md'))
+    const newItem = plan.items.find(i => i.targetPath.includes('brand-new.md'))
     expect(existingItem!.action).toBe('conflict')
     expect(newItem!.action).toBe('create')
   })
@@ -193,16 +194,15 @@ describe('executeMigrationPlan - unit tests', () => {
   })
 })
 
-
 // ============================================================
 // Generators for dry-run property test
 // ============================================================
 
 const serverNameArb = fc.stringMatching(/^[a-z][a-z0-9-]{0,19}$/)
-const commandArb = fc.stringMatching(/^[a-zA-Z][a-zA-Z0-9._/-]{0,29}$/)
-const argArb = fc.stringMatching(/^[a-zA-Z0-9@_./:=-]{1,30}$/)
+const commandArb = fc.stringMatching(/^[a-z][\w./-]{0,29}$/i)
+const argArb = fc.stringMatching(/^[\w@./:=-]{1,30}$/)
 const envKeyArb = fc.stringMatching(/^[A-Z][A-Z0-9_]{0,19}$/)
-const envValueArb = fc.stringMatching(/^[a-zA-Z0-9_./-]{1,30}$/)
+const envValueArb = fc.stringMatching(/^[\w./-]{1,30}$/)
 
 const envArb = fc.oneof(
   fc.constant(undefined),
@@ -226,7 +226,8 @@ const migrationDataArb: fc.Arbitrary<MigrationData> = fc.record({
   mcpServers: fc.array(mcpServerArb, { minLength: 0, maxLength: 3 }).map((servers) => {
     const seen = new Set<string>()
     return servers.filter((s) => {
-      if (seen.has(s.name)) return false
+      if (seen.has(s.name))
+        return false
       seen.add(s.name)
       return true
     })
@@ -234,7 +235,8 @@ const migrationDataArb: fc.Arbitrary<MigrationData> = fc.record({
   skills: fc.array(skillFileArb, { minLength: 0, maxLength: 3 }).map((skills) => {
     const seen = new Set<string>()
     return skills.filter((s) => {
-      if (seen.has(s.relativePath)) return false
+      if (seen.has(s.relativePath))
+        return false
       seen.add(s.relativePath)
       return true
     })
@@ -261,7 +263,7 @@ async function listAllFiles(dir: string): Promise<string[]> {
   return results.sort()
 }
 
-describe('Migration Plan - dry-run property tests', () => {
+describe('migration Plan - dry-run property tests', () => {
   /**
    * **Feature: tool-migration, Property 6: Dry-run 模式不产生文件写入**
    * **Validates: Requirements 5.6**

@@ -1,17 +1,17 @@
+import type { ProviderName } from '../src/types.js'
+import type { CanonicalMCPServer } from '../src/utils/mcp.js'
+import type { MigrationData, SkillFile } from '../src/utils/migration-adapter.js'
+import fs from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'pathe'
 /**
  * Exhaustive cross-migration test: ALL from→to provider combinations.
  * 7 providers × 6 targets = 42 pairs, tested for both MCP and skills.
  */
-import { describe, expect, it, beforeEach, afterEach } from 'vitest'
-import fs from 'node:fs/promises'
-import { join } from 'pathe'
-import { tmpdir } from 'node:os'
-import { readMigrationData, writeMigrationData, prepareMigrationData } from '../src/utils/migration-adapter.js'
-import { buildMigrationPlan, executeMigrationPlan } from '../src/utils/migration-plan.js'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { prepareMigrationData, readMigrationData, writeMigrationData } from '../src/utils/migration-adapter.js'
 import { isStructuredSkills } from '../src/utils/migration-paths.js'
-import type { MigrationData, SkillFile } from '../src/utils/migration-adapter.js'
-import type { CanonicalMCPServer } from '../src/utils/mcp.js'
-import type { ProviderName } from '../src/types.js'
+import { buildMigrationPlan, executeMigrationPlan } from '../src/utils/migration-plan.js'
 
 const ALL_PROVIDERS: ProviderName[] = ['claude', 'opencode', 'codex', 'gemini', 'kiro', 'qoder', 'cursor']
 
@@ -19,7 +19,8 @@ const ALL_PROVIDERS: ProviderName[] = ['claude', 'opencode', 'codex', 'gemini', 
 const ALL_PAIRS: [ProviderName, ProviderName][] = []
 for (const from of ALL_PROVIDERS) {
   for (const to of ALL_PROVIDERS) {
-    if (from !== to) ALL_PAIRS.push([from, to])
+    if (from !== to)
+      ALL_PAIRS.push([from, to])
   }
 }
 
@@ -80,7 +81,8 @@ function normalizeServer(s: CanonicalMCPServer): Record<string, unknown> {
   const base: Record<string, unknown> = { name: s.name, transport: s.transport }
   if (s.transport === 'url') {
     base.url = s.url
-  } else {
+  }
+  else {
     base.command = s.command ?? ''
     base.args = [...(s.args ?? [])]
   }
@@ -101,7 +103,7 @@ function sortByName(servers: Record<string, unknown>[]): Record<string, unknown>
 // 1. ALL 42 pairs: Stdio MCP servers write→read→write→read cycle
 // ============================================================
 
-describe('ALL pairs: Stdio MCP servers survive write→read→write→read cycle', () => {
+describe('aLL pairs: Stdio MCP servers survive write→read→write→read cycle', () => {
   for (const [from, to] of ALL_PAIRS) {
     it(`${from} →${to}`, async () => {
       const srcRoot = join(testDir, `stdio-${from}-${to}-src`)
@@ -135,7 +137,7 @@ describe('ALL pairs: Stdio MCP servers survive write→read→write→read cycle
 // 2. ALL 42 pairs: Mixed (stdio + URL) MCP servers migration
 // ============================================================
 
-describe('ALL pairs: Mixed stdio+URL MCP servers survive migration', () => {
+describe('aLL pairs: Mixed stdio+URL MCP servers survive migration', () => {
   for (const [from, to] of ALL_PAIRS) {
     it(`${from} →${to}`, async () => {
       const srcRoot = join(testDir, `mixed-${from}-${to}-src`)
@@ -172,7 +174,7 @@ describe('ALL pairs: Mixed stdio+URL MCP servers survive migration', () => {
 // 3. ALL 42 pairs: Skills migration with format conversion
 // ============================================================
 
-describe('ALL pairs: Skills migration with automatic format conversion', () => {
+describe('aLL pairs: Skills migration with automatic format conversion', () => {
   for (const [from, to] of ALL_PAIRS) {
     it(`${from} →${to}`, async () => {
       const srcRoot = join(testDir, `skills-${from}-${to}-src`)
@@ -194,27 +196,33 @@ describe('ALL pairs: Skills migration with automatic format conversion', () => {
       // Prepare (format conversion)
       const { data: prepared } = prepareMigrationData(
         { mcpServers: [], skills: readSrc.skills },
-        from, 'project', to, 'project',
+        from,
+        'project',
+        to,
+        'project',
       )
 
       // Verify conversion logic
       if (srcStructured && dstStructured) {
         // structured→structured: all files preserved
         expect(prepared.skills.length).toBe(sourceSkills.length)
-      } else if (srcStructured && !dstStructured) {
+      }
+      else if (srcStructured && !dstStructured) {
         // structured→flat: only SKILL.md files, renamed to <name>.md
         const skillMdCount = sourceSkills.filter(s => s.relativePath.endsWith('/SKILL.md')).length
         expect(prepared.skills.length).toBe(skillMdCount)
         for (const skill of prepared.skills) {
           expect(skill.relativePath).toMatch(/^[a-z][a-z0-9-]*\.md$/)
         }
-      } else if (!srcStructured && dstStructured) {
+      }
+      else if (!srcStructured && dstStructured) {
         // flat→structured: <name>.md →<name>/SKILL.md
         expect(prepared.skills.length).toBe(sourceSkills.length)
         for (const skill of prepared.skills) {
           expect(skill.relativePath).toMatch(/\/SKILL\.md$/)
         }
-      } else {
+      }
+      else {
         // flat→flat: direct copy
         expect(prepared.skills.length).toBe(sourceSkills.length)
       }
@@ -240,7 +248,7 @@ describe('ALL pairs: Skills migration with automatic format conversion', () => {
 // 4. ALL 42 pairs: Full pipeline (read→prepare→plan→execute→verify)
 // ============================================================
 
-describe('ALL pairs: Full migration pipeline end-to-end', () => {
+describe('aLL pairs: Full migration pipeline end-to-end', () => {
   for (const [from, to] of ALL_PAIRS) {
     it(`${from} →${to}`, async () => {
       const srcRoot = join(testDir, `pipe-${from}-${to}-src`)
@@ -294,7 +302,7 @@ describe('ALL pairs: Full migration pipeline end-to-end', () => {
 // 5. ALL 42 pairs: Conflict detection (pre-existing target)
 // ============================================================
 
-describe('ALL pairs: Conflict detection when target already has data', () => {
+describe('aLL pairs: Conflict detection when target already has data', () => {
   for (const [from, to] of ALL_PAIRS) {
     it(`${from} →${to}: existing target files marked as conflict`, async () => {
       const srcRoot = join(testDir, `conf-${from}-${to}-src`)
@@ -323,7 +331,7 @@ describe('ALL pairs: Conflict detection when target already has data', () => {
 // 6. ALL 42 pairs: Double migration (A→B→A) round-trip stability
 // ============================================================
 
-describe('ALL pairs: Double migration A→B→A round-trip for MCP', () => {
+describe('aLL pairs: Double migration A→B→A round-trip for MCP', () => {
   for (const [from, to] of ALL_PAIRS) {
     it(`${from} →${to} →${from}: servers survive double migration`, async () => {
       const root1 = join(testDir, `dbl-${from}-${to}-1`)
@@ -363,7 +371,7 @@ describe('ALL pairs: Double migration A→B→A round-trip for MCP', () => {
 // 7. URL server with headers: migration compatibility matrix
 // ============================================================
 
-describe('URL server with headers: migration across all pairs', () => {
+describe('uRL server with headers: migration across all pairs', () => {
   const SERVERS_WITH_HEADERS: CanonicalMCPServer[] = [
     URL_SERVER_WITH_HEADERS,
     { name: 'simple-cmd', transport: 'stdio', command: 'node', args: ['srv.js'] },
@@ -383,7 +391,10 @@ describe('URL server with headers: migration across all pairs', () => {
       // Prepare with header filtering
       const { data: prepared, skippedServers } = prepareMigrationData(
         { mcpServers: readSrc.mcpServers, skills: [] },
-        from, 'project', to, 'project',
+        from,
+        'project',
+        to,
+        'project',
       )
 
       // qoder doesn't support headers →authed-api should be skipped
@@ -392,7 +403,8 @@ describe('URL server with headers: migration across all pairs', () => {
         expect(skippedServers.length).toBe(1)
         expect(skippedServers[0].name).toBe('authed-api')
         expect(prepared.mcpServers.length).toBe(1) // only simple-cmd
-      } else {
+      }
+      else {
         expect(skippedServers.length).toBe(0)
         expect(prepared.mcpServers.length).toBe(2)
       }
@@ -413,7 +425,7 @@ describe('URL server with headers: migration across all pairs', () => {
 // 8. Empty source: all pairs handle gracefully
 // ============================================================
 
-describe('ALL pairs: Empty source data handled gracefully', () => {
+describe('aLL pairs: Empty source data handled gracefully', () => {
   for (const [from, to] of ALL_PAIRS) {
     it(`${from} →${to}: empty data produces empty result`, async () => {
       const dstRoot = join(testDir, `empty-${from}-${to}`)

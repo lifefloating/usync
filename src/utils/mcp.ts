@@ -1,6 +1,6 @@
 import type { ProviderName } from '../types.js'
-import { parse as parseTOML, stringify as stringifyTOML } from 'smol-toml'
 import consola from 'consola'
+import { parse as parseTOML, stringify as stringifyTOML } from 'smol-toml'
 
 export interface CanonicalMCPServer {
   name: string
@@ -18,17 +18,39 @@ export interface CanonicalMCPServer {
 }
 
 const KNOWN_SERVER_KEYS = new Set([
-  'command', 'args', 'env', 'url',
+  'command',
+  'args',
+  'env',
+  'url',
   // codex-specific
-  'bearer_token_env_var', 'startup_timeout_sec', 'tool_timeout_sec', 'enabled', 'required',
-  'enabled_tools', 'disabled_tools', 'cwd', 'env_vars', 'http_headers', 'env_http_headers',
+  'bearer_token_env_var',
+  'startup_timeout_sec',
+  'tool_timeout_sec',
+  'enabled',
+  'required',
+  'enabled_tools',
+  'disabled_tools',
+  'cwd',
+  'env_vars',
+  'http_headers',
+  'env_http_headers',
   // opencode-specific
-  'type', 'environment', 'timeout', 'headers', 'oauth',
+  'type',
+  'environment',
+  'timeout',
+  'headers',
+  'oauth',
   // gemini-specific
-  'httpUrl', 'trust', 'includeTools', 'excludeTools', 'targetAudience', 'targetServiceAccount',
+  'httpUrl',
+  'trust',
+  'includeTools',
+  'excludeTools',
+  'targetAudience',
+  'targetServiceAccount',
   'authProviderType',
   // cursor-specific
-  'disabled', 'autoApprove',
+  'disabled',
+  'autoApprove',
   // claude code specific
   'type',
 ])
@@ -93,7 +115,8 @@ function detectMcpRemoteUrl(command: string, args: string[]): McpRemoteDetection
   const remoteIdx = allParts.findIndex(part =>
     part === 'mcp-remote' || part.startsWith('mcp-remote@'),
   )
-  if (remoteIdx === -1) return null
+  if (remoteIdx === -1)
+    return null
 
   let url: string | null = null
   const headers: Record<string, string> = {}
@@ -107,19 +130,22 @@ function detectMcpRemoteUrl(command: string, args: string[]): McpRemoteDetection
       if (colonIdx > 0) {
         const key = headerVal.slice(0, colonIdx).trim()
         const value = headerVal.slice(colonIdx + 1).trim()
-        if (key && value) headers[key] = value
+        if (key && value)
+          headers[key] = value
       }
       i++ // skip the header value
       continue
     }
-    if (part.startsWith('--') || part.startsWith('-')) continue
+    if (part.startsWith('--') || part.startsWith('-'))
+      continue
     // Check if it looks like a URL
     if (!url && (part.startsWith('http://') || part.startsWith('https://'))) {
       url = part
     }
   }
 
-  if (!url) return null
+  if (!url)
+    return null
   return { url, headers: Object.keys(headers).length > 0 ? headers : undefined }
 }
 
@@ -130,11 +156,13 @@ function parseOpenCodeServer(name: string, entry: Record<string, unknown>): Cano
   if (serverType === 'remote') {
     // Remote server with URL
     const url = entry.url as string | undefined
-    if (!url) return null
+    if (!url)
+      return null
     const server: CanonicalMCPServer = { name, transport: 'url', url }
     // OpenCode supports headers for remote servers
     const hdrs = parseHeadersField(entry.headers)
-    if (hdrs) server.headers = hdrs
+    if (hdrs)
+      server.headers = hdrs
     return server
   }
 
@@ -148,7 +176,8 @@ function parseOpenCodeServer(name: string, entry: Record<string, unknown>): Cano
     const remote = detectMcpRemoteUrl(command, args)
     if (remote) {
       const server: CanonicalMCPServer = { name, transport: 'url', url: remote.url }
-      if (remote.headers) server.headers = remote.headers
+      if (remote.headers)
+        server.headers = remote.headers
       return server
     }
 
@@ -159,9 +188,11 @@ function parseOpenCodeServer(name: string, entry: Record<string, unknown>): Cano
     if (envObj && typeof envObj === 'object' && !Array.isArray(envObj)) {
       const env: Record<string, string> = {}
       for (const [k, v] of Object.entries(envObj)) {
-        if (typeof v === 'string') env[k] = v
+        if (typeof v === 'string')
+          env[k] = v
       }
-      if (Object.keys(env).length > 0) server.env = env
+      if (Object.keys(env).length > 0)
+        server.env = env
     }
     return server
   }
@@ -171,10 +202,12 @@ function parseOpenCodeServer(name: string, entry: Record<string, unknown>): Cano
 
 /** Parse a headers field from a config entry (Record<string, string>) */
 function parseHeadersField(value: unknown): Record<string, string> | undefined {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    return undefined
   const headers: Record<string, string> = {}
   for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-    if (typeof v === 'string') headers[k] = v
+    if (typeof v === 'string')
+      headers[k] = v
   }
   return Object.keys(headers).length > 0 ? headers : undefined
 }
@@ -210,7 +243,8 @@ function parseStandardServer(name: string, entry: Record<string, unknown>): Cano
     if (remote) {
       server.transport = 'url'
       server.url = remote.url
-      if (remote.headers) server.headers = remote.headers
+      if (remote.headers)
+        server.headers = remote.headers
       delete server.command
       delete server.args
     }
@@ -220,15 +254,18 @@ function parseStandardServer(name: string, entry: Record<string, unknown>): Cano
   if (server.transport === 'url' && !server.headers) {
     // Standard providers use "headers", codex uses "http_headers"
     const hdrs = parseHeadersField(entry.headers) || parseHeadersField(entry.http_headers)
-    if (hdrs) server.headers = hdrs
+    if (hdrs)
+      server.headers = hdrs
   }
 
   if (entry.env && typeof entry.env === 'object' && !Array.isArray(entry.env)) {
     const env: Record<string, string> = {}
     for (const [k, v] of Object.entries(entry.env as Record<string, unknown>)) {
-      if (typeof v === 'string') env[k] = v
+      if (typeof v === 'string')
+        env[k] = v
     }
-    if (Object.keys(env).length > 0) server.env = env
+    if (Object.keys(env).length > 0)
+      server.env = env
   }
 
   return server
@@ -270,7 +307,8 @@ export function parseMCPFromProvider(provider: ProviderName, configContent: stri
 
     if (provider === 'opencode') {
       const server = parseOpenCodeServer(name, entry)
-      if (server) result.push(server)
+      if (server)
+        result.push(server)
     }
     else {
       result.push(parseStandardServer(name, entry))
@@ -279,7 +317,6 @@ export function parseMCPFromProvider(provider: ProviderName, configContent: stri
 
   return result
 }
-
 
 /**
  * Serialize an array of CanonicalMCPServer into a formatted string

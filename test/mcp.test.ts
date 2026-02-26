@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import type { ProviderName } from '../src/types.js'
+import type { CanonicalMCPServer } from '../src/utils/mcp.js'
 import fc from 'fast-check'
 import { parse as parseTOML, stringify as stringifyTOML } from 'smol-toml'
+import { describe, expect, it } from 'vitest'
 import { parseMCPFromProvider, serializeMCPForProvider } from '../src/utils/mcp.js'
-import type { CanonicalMCPServer } from '../src/utils/mcp.js'
-import type { ProviderName } from '../src/types.js'
 
 const ALL_PROVIDERS: ProviderName[] = ['claude', 'opencode', 'codex', 'gemini', 'kiro', 'qoder', 'cursor']
 
@@ -16,12 +16,12 @@ const serverNameArb = fc.stringMatching(/^[a-z][a-z0-9-]{0,19}$/)
 /**
  * Generator for a non-empty command string.
  */
-const commandArb = fc.stringMatching(/^[a-zA-Z][a-zA-Z0-9._/-]{0,29}$/)
+const commandArb = fc.stringMatching(/^[a-z][\w./-]{0,29}$/i)
 
 /**
  * Generator for a single arg string (non-empty, no control chars).
  */
-const argArb = fc.stringMatching(/^[a-zA-Z0-9@_./:=-]{1,30}$/)
+const argArb = fc.stringMatching(/^[\w@./:=-]{1,30}$/)
 
 /**
  * Generator for env key (valid env var name).
@@ -31,7 +31,7 @@ const envKeyArb = fc.stringMatching(/^[A-Z][A-Z0-9_]{0,19}$/)
 /**
  * Generator for env value.
  */
-const envValueArb = fc.stringMatching(/^[a-zA-Z0-9_./-]{1,30}$/)
+const envValueArb = fc.stringMatching(/^[\w./-]{1,30}$/)
 
 /**
  * Generator for optional env record.
@@ -93,7 +93,7 @@ function normalizeList(servers: CanonicalMCPServer[]): CanonicalMCPServer[] {
   return servers.map(normalizeServer).sort((a, b) => a.name.localeCompare(b.name))
 }
 
-describe('MCP property tests', () => {
+describe('mCP property tests', () => {
   /**
    * **Feature: tool-migration, Property 2: MCP 配置跨工具往返一致性**
    * **Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 6.1, 6.2, 6.4**
@@ -121,12 +121,12 @@ describe('MCP property tests', () => {
   )
 })
 
-describe('MCP extra fields property tests', () => {
+describe('mCP extra fields property tests', () => {
   /**
    * Generator for random extra field keys (not command, args, env, or name).
    */
   const extraFieldKeyArb = fc.stringMatching(/^[a-z][a-zA-Z]{1,15}$/).filter(
-    (k) => !['command', 'args', 'env', 'name'].includes(k),
+    k => !['command', 'args', 'env', 'name'].includes(k),
   )
 
   /**
@@ -150,7 +150,7 @@ describe('MCP extra fields property tests', () => {
    */
   function buildMCPConfigWithExtras(
     provider: ProviderName,
-    servers: { name: string; command?: string; args?: string[]; env?: Record<string, string> }[],
+    servers: { name: string, command?: string, args?: string[], env?: Record<string, string> }[],
     extraFieldsPerServer: Record<string, unknown>[],
   ): string {
     const serversObj: Record<string, Record<string, unknown>> = {}
@@ -209,12 +209,13 @@ describe('MCP extra fields property tests', () => {
         .map((pairs) => {
           const seen = new Set<string>()
           return pairs.filter(([s]) => {
-            if (seen.has(s.name)) return false
+            if (seen.has(s.name))
+              return false
             seen.add(s.name)
             return true
           })
         })
-        .filter((pairs) => pairs.length > 0)
+        .filter(pairs => pairs.length > 0)
 
       fc.assert(
         fc.property(serverListWithExtrasArb, (pairs) => {
@@ -237,7 +238,7 @@ describe('MCP extra fields property tests', () => {
 
           // Verify the canonical fields are preserved correctly
           for (const server of parsed) {
-            const original = servers.find((s) => s.name === server.name)
+            const original = servers.find(s => s.name === server.name)
             expect(original).toBeDefined()
             expect(server.command).toBe(original!.command)
             expect(server.args).toEqual(original!.args)
@@ -251,7 +252,6 @@ describe('MCP extra fields property tests', () => {
     },
   )
 })
-
 
 // ============================================================
 // Unit tests for MCP parsing and serialization (Task 3.4)

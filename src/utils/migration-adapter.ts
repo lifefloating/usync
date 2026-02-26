@@ -4,7 +4,7 @@ import type { MigrationScope } from './migration-paths.js'
 import fs from 'node:fs/promises'
 import { basename, join, relative } from 'pathe'
 import { parse as parseTOML, stringify as stringifyTOML } from 'smol-toml'
-import { exists, walkFiles, ensureParentDir } from './fs.js'
+import { ensureParentDir, exists, walkFiles } from './fs.js'
 import { parseMCPFromProvider } from './mcp.js'
 import { getMCPConfigPath, getSkillsDir, isStructuredSkills } from './migration-paths.js'
 
@@ -21,7 +21,8 @@ export interface MigrationData {
 
 /** Walk all files in a directory, returning relative paths and content */
 async function readFilesFromDir(dir: string): Promise<SkillFile[]> {
-  if (!await exists(dir)) return []
+  if (!await exists(dir))
+    return []
   const files = await walkFiles(dir)
   const result: SkillFile[] = []
   for (const file of files) {
@@ -33,7 +34,8 @@ async function readFilesFromDir(dir: string): Promise<SkillFile[]> {
 
 /** Read MCP config from a provider's config file */
 async function readMCPConfig(provider: ProviderName, configPath: string): Promise<CanonicalMCPServer[]> {
-  if (!await exists(configPath)) return []
+  if (!await exists(configPath))
+    return []
   const content = await fs.readFile(configPath, 'utf-8')
   return parseMCPFromProvider(provider, content)
 }
@@ -127,7 +129,12 @@ export async function readMigrationData(
  * Servers with headers migrated to unsupported providers will be skipped.
  */
 const HEADERS_SUPPORTED_PROVIDERS = new Set<ProviderName>([
-  'claude', 'opencode', 'codex', 'gemini', 'kiro', 'cursor',
+  'claude',
+  'opencode',
+  'codex',
+  'gemini',
+  'kiro',
+  'cursor',
 ])
 
 export interface PreparedMigrationResult {

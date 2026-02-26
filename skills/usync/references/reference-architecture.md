@@ -70,10 +70,10 @@ All provider-specific MCP configs are parsed into a canonical internal format:
 interface CanonicalMCPServer {
   name: string
   transport: 'stdio' | 'url'
-  command?: string    // stdio only
-  args?: string[]     // stdio only
-  url?: string        // url only
-  headers?: Record<string, string>  // url only
+  command?: string // stdio only
+  args?: string[] // stdio only
+  url?: string // url only
+  headers?: Record<string, string> // url only
   env?: Record<string, string>
 }
 ```

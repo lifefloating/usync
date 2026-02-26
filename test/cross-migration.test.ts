@@ -1,16 +1,16 @@
-import { describe, expect, it, beforeEach, afterEach } from 'vitest'
-import fs from 'node:fs/promises'
-import { join } from 'pathe'
-import { tmpdir } from 'node:os'
-import { parse as parseTOML } from 'smol-toml'
-import { readMigrationData, writeMigrationData, prepareMigrationData } from '../src/utils/migration-adapter.js'
-import { buildMigrationPlan, executeMigrationPlan } from '../src/utils/migration-plan.js'
-import { parseMCPFromProvider, serializeMCPForProvider } from '../src/utils/mcp.js'
-import { getMCPConfigPath, getSkillsDir, isStructuredSkills } from '../src/utils/migration-paths.js'
-import type { MigrationData, SkillFile } from '../src/utils/migration-adapter.js'
-import type { CanonicalMCPServer } from '../src/utils/mcp.js'
 import type { ProviderName } from '../src/types.js'
+import type { CanonicalMCPServer } from '../src/utils/mcp.js'
+import type { MigrationData, SkillFile } from '../src/utils/migration-adapter.js'
 import type { MigrationScope } from '../src/utils/migration-paths.js'
+import fs from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'pathe'
+import { parse as parseTOML } from 'smol-toml'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { parseMCPFromProvider, serializeMCPForProvider } from '../src/utils/mcp.js'
+import { prepareMigrationData, readMigrationData, writeMigrationData } from '../src/utils/migration-adapter.js'
+import { getMCPConfigPath, getSkillsDir, isStructuredSkills } from '../src/utils/migration-paths.js'
+import { buildMigrationPlan, executeMigrationPlan } from '../src/utils/migration-plan.js'
 
 const ALL_PROVIDERS: ProviderName[] = ['claude', 'opencode', 'codex', 'gemini', 'kiro', 'qoder', 'cursor']
 const ALL_SCOPES: MigrationScope[] = ['global', 'project']
@@ -56,7 +56,6 @@ const FLAT_SKILLS: SkillFile[] = [
   { relativePath: 'deployment.md', content: '# Deployment\nUse CI/CD pipeline.' },
 ]
 
-
 // ============================================================
 // 1. MCP config path correctness for every provider × scope
 // ============================================================
@@ -85,7 +84,7 @@ describe('getMCPConfigPath - correctness for all provider × scope combinations'
       global: join(process.env.HOME || process.env.USERPROFILE || '', '.qoder', 'mcp.json'),
       project: join(projectRoot, '.qoder', 'mcp.json'),
     },
-    'gemini': {
+    gemini: {
       global: join(process.env.HOME || process.env.USERPROFILE || '', '.gemini', 'settings.json'),
       project: join(projectRoot, '.gemini', 'settings.json'),
     },
@@ -134,7 +133,7 @@ describe('getSkillsDir - correctness for all provider × scope combinations', ()
       global: join(home, '.qoder', 'skills'),
       project: join(projectRoot, '.qoder', 'skills'),
     },
-    'gemini': {
+    gemini: {
       global: join(home, '.gemini', 'skills'),
       project: join(projectRoot, '.gemini', 'skills'),
     },
@@ -165,7 +164,7 @@ describe('isStructuredSkills - correctness for all provider × scope combination
     opencode: { global: true, project: true },
     codex: { global: true, project: true },
     qoder: { global: true, project: true },
-    'gemini': { global: true, project: true },
+    gemini: { global: true, project: true },
     cursor: { global: true, project: true },
   }
 
@@ -178,13 +177,12 @@ describe('isStructuredSkills - correctness for all provider × scope combination
   }
 })
 
-
 // ============================================================
 // 4. Cross-tool MCP migration end-to-end tests
 //    Write MCP to source →read →write to target →read back →verify
 // ============================================================
 
-describe('Cross-tool MCP migration end-to-end', () => {
+describe('cross-tool MCP migration end-to-end', () => {
   /** Key migration pairs covering all format variations */
   const MIGRATION_PAIRS: [ProviderName, ProviderName][] = [
     // Standard JSON mcpServers →Standard JSON mcpServers
@@ -214,7 +212,8 @@ describe('Cross-tool MCP migration end-to-end', () => {
     const base: CanonicalMCPServer = { name: s.name, transport: s.transport }
     if (s.transport === 'url') {
       base.url = s.url
-    } else {
+    }
+    else {
       base.command = s.command ?? ''
       base.args = [...(s.args ?? [])]
     }
@@ -261,7 +260,7 @@ describe('Cross-tool MCP migration end-to-end', () => {
 //    After writeMigrationData, read raw file and verify structure
 // ============================================================
 
-describe('MCP write format verification - raw file structure', () => {
+describe('mCP write format verification - raw file structure', () => {
   it('claude project writes .mcp.json with mcpServers key', async () => {
     const root = join(testDir, 'fmt-cc')
     await fs.mkdir(root, { recursive: true })
@@ -344,12 +343,11 @@ describe('MCP write format verification - raw file structure', () => {
   })
 })
 
-
 // ============================================================
 // 6. URL transport migration tests
 // ============================================================
 
-describe('URL transport MCP server migration', () => {
+describe('uRL transport MCP server migration', () => {
   const URL_SERVERS: CanonicalMCPServer[] = [
     { name: 'remote-api', transport: 'url', url: 'https://mcp.example.com/v1' },
     { name: 'local-cmd', transport: 'stdio', command: 'node', args: ['srv.js'] },
@@ -435,7 +433,7 @@ describe('URL transport MCP server migration', () => {
 //    Covers structured→structured, structured→flat, flat→structured, flat→flat
 // ============================================================
 
-describe('Cross-tool skills migration end-to-end', () => {
+describe('cross-tool skills migration end-to-end', () => {
   // structured→structured pairs
   describe('structured →structured (preserves directory structure)', () => {
     const PAIRS: [ProviderName, ProviderName][] = [
@@ -470,7 +468,10 @@ describe('Cross-tool skills migration end-to-end', () => {
         // Prepare (convert format)
         const { data: prepared } = prepareMigrationData(
           { mcpServers: [], skills: readSrc.skills },
-          from, 'project', to, 'project',
+          from,
+          'project',
+          to,
+          'project',
         )
 
         // Both structured →skills should be same count
@@ -495,7 +496,7 @@ describe('Cross-tool skills migration end-to-end', () => {
   // structured→flat pairs
   describe('structured →flat (SKILL.md becomes <name>.md, references dropped)', () => {
     const PAIRS: [ProviderName, ProviderName][] = [
-      ['claude', 'kiro'],  // kiro project is flat (.kiro/steering)
+      ['claude', 'kiro'], // kiro project is flat (.kiro/steering)
       ['opencode', 'kiro'],
       ['cursor', 'kiro'],
     ]
@@ -512,7 +513,10 @@ describe('Cross-tool skills migration end-to-end', () => {
 
         const { data: prepared } = prepareMigrationData(
           { mcpServers: [], skills: readSrc.skills },
-          from, 'project', to, 'project',
+          from,
+          'project',
+          to,
+          'project',
         )
 
         // Flat: only SKILL.md files become <name>.md, references are dropped
@@ -543,7 +547,7 @@ describe('Cross-tool skills migration end-to-end', () => {
   // flat→structured pairs
   describe('flat →structured (<name>.md becomes <name>/SKILL.md)', () => {
     const PAIRS: [ProviderName, ProviderName][] = [
-      ['kiro', 'claude'],  // kiro project is flat
+      ['kiro', 'claude'], // kiro project is flat
       ['kiro', 'gemini'],
       ['kiro', 'cursor'],
       ['kiro', 'qoder'],
@@ -561,7 +565,10 @@ describe('Cross-tool skills migration end-to-end', () => {
 
         const { data: prepared } = prepareMigrationData(
           { mcpServers: [], skills: readSrc.skills },
-          from, 'project', to, 'project',
+          from,
+          'project',
+          to,
+          'project',
         )
 
         // Each flat .md →<name>/SKILL.md
@@ -586,13 +593,12 @@ describe('Cross-tool skills migration end-to-end', () => {
   // kiro→kiro would be same provider, not tested here
 })
 
-
 // ============================================================
 // 8. Full migration pipeline tests
 //    readMigrationData →prepareMigrationData →buildMigrationPlan →executeMigrationPlan →readMigrationData (verify)
 // ============================================================
 
-describe('Full migration pipeline end-to-end', () => {
+describe('full migration pipeline end-to-end', () => {
   const PIPELINE_PAIRS: [ProviderName, ProviderName][] = [
     ['claude', 'kiro'],
     ['kiro', 'claude'],
@@ -663,7 +669,7 @@ describe('Full migration pipeline end-to-end', () => {
 // 9. MCP config merge (preserves existing fields)
 // ============================================================
 
-describe('MCP config merge - preserves existing fields', () => {
+describe('mCP config merge - preserves existing fields', () => {
   it('claude: existing fields in .mcp.json are preserved', async () => {
     const root = join(testDir, 'merge-cc')
     await fs.mkdir(root, { recursive: true })
@@ -706,7 +712,7 @@ describe('MCP config merge - preserves existing fields', () => {
     const root = join(testDir, 'merge-kiro')
     await fs.mkdir(join(root, '.kiro', 'settings'), { recursive: true })
     await fs.writeFile(join(root, '.kiro', 'settings', 'mcp.json'), JSON.stringify({
-      mcpServers: { 'existing': { command: 'keep', args: [] } },
+      mcpServers: { existing: { command: 'keep', args: [] } },
       customSetting: true,
     }), 'utf-8')
 
@@ -726,7 +732,7 @@ describe('MCP config merge - preserves existing fields', () => {
 //     For every pair of providers, serialize→parse→serialize→parse should be stable
 // ============================================================
 
-describe('Cross-format MCP serialization stability', () => {
+describe('cross-format MCP serialization stability', () => {
   // Test a representative subset to avoid O(n²) explosion
   const PAIRS: [ProviderName, ProviderName][] = [
     ['claude', 'opencode'],
@@ -755,12 +761,19 @@ describe('Cross-format MCP serialization stability', () => {
 
       // Should be stable after double round-trip
       const normalize = (servers: CanonicalMCPServer[]) =>
-        servers.map(s => {
+        servers.map((s) => {
           const base: any = { name: s.name, transport: s.transport }
-          if (s.transport === 'url') base.url = s.url
-          else { base.command = s.command ?? ''; base.args = [...(s.args ?? [])] }
-          if (s.headers && Object.keys(s.headers).length > 0) base.headers = { ...s.headers }
-          if (s.env && Object.keys(s.env).length > 0) base.env = { ...s.env }
+          if (s.transport === 'url') {
+            base.url = s.url
+          }
+          else {
+            base.command = s.command ?? ''
+            base.args = [...(s.args ?? [])]
+          }
+          if (s.headers && Object.keys(s.headers).length > 0)
+            base.headers = { ...s.headers }
+          if (s.env && Object.keys(s.env).length > 0)
+            base.env = { ...s.env }
           return base
         }).sort((a: any, b: any) => a.name.localeCompare(b.name))
 
@@ -774,8 +787,8 @@ describe('Cross-format MCP serialization stability', () => {
 //     Verify files end up in the correct filesystem location
 // ============================================================
 
-describe('Skills write path verification - filesystem locations', () => {
-  const pathChecks: { provider: ProviderName; scope: MigrationScope; expectedDir: string }[] = [
+describe('skills write path verification - filesystem locations', () => {
+  const pathChecks: { provider: ProviderName, scope: MigrationScope, expectedDir: string }[] = [
     { provider: 'claude', scope: 'project', expectedDir: '.claude/skills' },
     { provider: 'kiro', scope: 'project', expectedDir: '.kiro/steering' },
     { provider: 'opencode', scope: 'project', expectedDir: '.opencode/skills' },
@@ -805,8 +818,8 @@ describe('Skills write path verification - filesystem locations', () => {
 //     Verify MCP config files end up in the correct filesystem location
 // ============================================================
 
-describe('MCP config write path verification - filesystem locations', () => {
-  const pathChecks: { provider: ProviderName; scope: MigrationScope; expectedPath: string }[] = [
+describe('mCP config write path verification - filesystem locations', () => {
+  const pathChecks: { provider: ProviderName, scope: MigrationScope, expectedPath: string }[] = [
     { provider: 'claude', scope: 'project', expectedPath: '.mcp.json' },
     { provider: 'kiro', scope: 'project', expectedPath: '.kiro/settings/mcp.json' },
     { provider: 'opencode', scope: 'project', expectedPath: 'opencode.json' },
