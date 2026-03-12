@@ -1,11 +1,11 @@
 ---
 name: usync
-description: Sync ClaudeCode/OpenCode/Codex/Gemini CLI settings and skills to GitHub Gist. Use when backing up, restoring, or syncing AI CLI tool configurations across machines.
+description: Sync Claude/OpenCode/Codex/Gemini/Kiro/Qoder/Cursor settings and skills to GitHub Gist. Migrate MCP configs and skills between AI coding tools with format conversion.
 ---
 
 # usync - AI CLI Config Sync
 
-Sync configurations and skills from ClaudeCode, OpenCode, Codex, and Gemini CLI to GitHub Gist for backup and cross-machine sync.
+Sync configurations and skills from Claude, OpenCode, Codex, Gemini, Kiro, Qoder, and Cursor to GitHub Gist for backup and cross-machine sync. Migrate MCP configs between tools with automatic format conversion.
 
 ## When to Use
 
@@ -14,6 +14,8 @@ Sync configurations and skills from ClaudeCode, OpenCode, Codex, and Gemini CLI 
 - Restoring AI CLI configs on a new machine
 - Auto-syncing config changes with watch mode
 - Managing settings for multiple AI CLI tools in one place
+- Migrating MCP configs and skills between different AI coding tools
+- Converting MCP config formats (JSON mcpServers, OpenCode mcp, Codex TOML)
 
 ## Quick Start
 
@@ -21,39 +23,43 @@ Sync configurations and skills from ClaudeCode, OpenCode, Codex, and Gemini CLI 
 # Install
 pnpm add -g usync-cli
 
-# Initialize — verify token and create a Gist
-usync-cli init
+# Initialize → verify token and create a Gist
+usync init
 
-# Scan — list all discovered config files
-usync-cli scan
+# Scan → list all discovered config files
+usync scan
 
-# Upload — sync local configs to Gist
-usync-cli upload --gist-id <id>
+# Upload → sync local configs to Gist
+usync upload --gist-id <id>
 
-# Download — restore configs from Gist
-usync-cli download --gist-id <id>
+# Download → restore configs from Gist
+usync download --gist-id <id>
 
-# Watch mode — auto-upload on changes
-usync-cli upload --gist-id <id> --watch
+# Watch mode → auto-upload on changes
+usync upload --gist-id <id> --watch
 ```
 
 ## Supported Providers
 
 | Provider | Global Config | Project Config |
 |----------|---------------|----------------|
-| ClaudeCode | `~/.claude/settings.json`, `~/.claude/skills/` | `.claude/settings.json`, `.claude/skills/` |
-| OpenCode | `~/.config/opencode/` (macOS), `%APPDATA%/opencode/` (Windows) | `opencode.json`, `.opencode/skills/` |
-| Codex | `~/.codex/config.json`, `~/.codex/skills/` | `.codex/config.json`, `.codex/skills/` |
-| Gemini CLI | `~/.gemini/settings.json`, `~/.gemini/skills/` | `.gemini/settings.json`, `.gemini/skills/` |
+| Claude | `~/.claude.json`, `~/.claude/settings.json`, `~/.claude/skills/` | `.mcp.json`, `.claude/settings.json`, `.claude/skills/` |
+| OpenCode | `~/.config/opencode/opencode.json(.jsonc)`, `~/.config/opencode/skills/` | `opencode.json(.jsonc)`, `.opencode/skills/` |
+| Codex | `~/.codex/config.toml`, `~/.codex/config.json`, `~/.codex/skills/` | `.codex/config.toml`, `.codex/skills/` |
+| Gemini | `~/.gemini/settings.json`, `~/.gemini/extensions/`, `~/.gemini/skills/` | `.gemini/settings.json`, `.gemini/skills/` |
+| Kiro | `~/.kiro/settings/mcp.json`, `~/.kiro/skills/` | `.kiro/settings/mcp.json`, `.kiro/steering/` |
+| Qoder | `~/.qoder/mcp.json`, `~/.qoder/skills/` | `.qoder/mcp.json`, `.qoder/skills/` |
+| Cursor | `~/.cursor/mcp.json`, `~/.cursor/rules/`, `~/.cursor/skills/` | `.cursor/mcp.json`, `.cursor/rules/`, `.cursor/skills/` |
 
 ## Commands
 
 | Command | Description | Reference |
 |---------|-------------|-----------|
-| `usync-cli init` | Verify token, create or validate Gist | [command-init](references/command-init.md) |
-| `usync-cli scan` | List discovered local config files | [command-scan](references/command-scan.md) |
-| `usync-cli upload` | Upload configs to GitHub Gist | [command-upload](references/command-upload.md) |
-| `usync-cli download` | Download and restore configs from Gist | [command-download](references/command-download.md) |
+| `usync init` | Verify token, create or validate Gist | [command-init](references/command-init.md) |
+| `usync scan` | List discovered local config files | [command-scan](references/command-scan.md) |
+| `usync upload` | Upload configs to GitHub Gist | [command-upload](references/command-upload.md) |
+| `usync download` | Download and restore configs from Gist | [command-download](references/command-download.md) |
+| `usync migrate` | Migrate MCP configs and skills between tools | [command-migrate](references/command-migrate.md) |
 
 ## References
 
@@ -107,8 +113,24 @@ usync-cli upload --gist-id <id> --watch --interval 30
 ### Filter specific providers
 
 ```bash
-usync-cli scan --providers claudecode,opencode
-usync-cli upload --gist-id <id> --providers claudecode
+usync scan --providers Claude,opencode
+usync upload --gist-id <id> --providers Claude
+```
+
+### Migrate between tools
+
+```bash
+# Migrate from Claude Code to Kiro
+usync migrate --from claude --to kiro
+
+# Dry-run preview
+usync migrate --from codex --to claude --dry-run
+
+# Force overwrite existing files
+usync migrate --from claude --to kiro --yes --overwrite
+
+# Migrate project-level configs
+usync migrate --from claude --to kiro --scope project
 ```
 
 ## Security
@@ -116,7 +138,7 @@ usync-cli upload --gist-id <id> --providers claudecode
 - Sensitive files are auto-excluded: `.env*`, `.key`, `.pem`, `.p12`
 - File contents are base64-encoded in the Gist
 - Use private Gists (default) for security
-- Tokens are never stored locally — use env vars
+- Tokens are never stored locally → use env vars
 
 ## Tech Stack
 

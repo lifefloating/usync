@@ -10,22 +10,22 @@ usync-cli init [options]
 
 ## Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `--token` | string | — | GitHub Personal Access Token |
-| `--token-env` | string | `GITHUB_TOKEN` | Environment variable name for token |
-| `--gist-id` | string | — | Existing Gist ID to verify access |
-| `--description` | string | `cloudSettings` | Description for new Gist |
-| `--public` | boolean | `false` | Create public Gist |
+| Option | Alias | Default | Description |
+|--------|-------|---------|-------------|
+| `--token` | `-T` | — | GitHub Personal Access Token |
+| `--token-env` | | `GITHUB_TOKEN` | Environment variable name for token |
+| `--gist-id` | `-g` | — | Existing Gist ID to verify access |
+| `--description` | `-d` | `cloudSettings` | Description for new Gist |
+| `--public` | `-p` | `false` | Create public Gist |
 
 ## Interactive Mode
 
 When run without flags in a TTY environment, `init` enters interactive mode:
 
-1. **Token prompt** — If no token found via flags/env, prompts for password input
-2. **Token verification** — Validates the token against GitHub API
-3. **Gist selection** — Choose between existing Gist ID or creating a new one
-4. **Confirmation** — Displays Gist ID and URL
+1. **Token prompt** → If no token found via flags/env, prompts for password input
+2. **Token verification** → Validates the token against GitHub API
+3. **Gist selection** → Choose between existing Gist ID or creating a new one
+4. **Confirmation** → Displays Gist ID and URL
 
 In CI/non-TTY environments, all values must be provided via flags or env vars.
 

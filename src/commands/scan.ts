@@ -11,8 +11,8 @@ export default defineCommand({
     description: 'Scan and list discovered local files',
   },
   args: {
-    providers: { type: 'string', description: 'Comma-separated providers: claudecode,opencode,codex,gemini-cli' },
-    cwd: { type: 'string', description: 'Project root directory' },
+    providers: { type: 'string', description: 'Comma-separated providers: claude,opencode,codex,gemini' },
+    cwd: { type: 'string', alias: 'C', description: 'Project root directory' },
   },
   async run({ args }) {
     const projectRoot = resolve(args.cwd ?? process.cwd())

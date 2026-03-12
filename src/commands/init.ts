@@ -11,11 +11,11 @@ export default defineCommand({
     description: 'Validate token and gist access, optionally create a new gist',
   },
   args: {
-    token: { type: 'string', description: 'GitHub PAT' },
+    token: { type: 'string', alias: 'T', description: 'GitHub PAT' },
     tokenEnv: { type: 'string', default: 'GITHUB_TOKEN', description: 'Token env var name' },
-    gistId: { type: 'string', description: 'Existing gist ID to verify access' },
-    description: { type: 'string', default: 'cloudSettings', description: 'Description for new gist' },
-    public: { type: 'boolean', default: false, description: 'Create public gist' },
+    gistId: { type: 'string', alias: 'g', description: 'Existing gist ID to verify access' },
+    description: { type: 'string', alias: 'd', default: 'cloudSettings', description: 'Description for new gist' },
+    public: { type: 'boolean', alias: 'p', default: false, description: 'Create public gist' },
   },
   async run({ args }) {
     p.intro(cyan('usync-cli init'))

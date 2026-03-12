@@ -35,15 +35,15 @@ usync-cli init --token ghp_xxxxxxxxxxxx
 ## First Sync
 
 ```bash
-# 1. Initialize — creates a new Gist
-usync-cli init
+# 1. Initialize → creates a new Gist
+usync init
 # → Outputs Gist ID (save this!)
 
-# 2. Scan — verify what files will be synced
-usync-cli scan
+# 2. Scan → verify what files will be synced
+usync scan
 
-# 3. Upload — sync to Gist
-usync-cli upload --gist-id <id>
+# 3. Upload → sync to Gist
+usync upload --gist-id <id>
 ```
 
 ## Restore on New Machine
@@ -64,5 +64,17 @@ usync-cli upload --gist-id <id> --watch
 Only sync specific tools:
 
 ```bash
-usync-cli upload --gist-id <id> --providers claudecode,opencode
+usync upload --gist-id <id> --providers claude,opencode
+```
+
+## Migrate Between Tools
+
+Move your MCP configs and skills from one AI coding tool to another:
+
+```bash
+# Migrate from Claude Code to Kiro
+usync migrate --from claude --to kiro
+
+# Preview changes first
+usync migrate --from claude --to kiro --dry-run
 ```

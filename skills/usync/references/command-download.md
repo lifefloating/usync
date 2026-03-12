@@ -10,15 +10,15 @@ usync-cli download --gist-id <id> [options]
 
 ## Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `--gist-id` | string | **required** | Gist ID to download from |
-| `--token` | string | — | GitHub PAT (recommended for private Gists) |
-| `--token-env` | string | `GITHUB_TOKEN` | Token env var name |
-| `--cwd` | string | `process.cwd()` | Project root for resolving `$PROJECT` paths |
-| `--output-root` | string | — | Override restore destination (sandbox mode) |
-| `--force` | boolean | `false` | Overwrite even if local file is newer |
-| `--strict-manifest` | boolean | `false` | Require usync manifest; disable raw fallback |
+| Option | Alias | Default | Description |
+|--------|-------|---------|-------------|
+| `--gist-id` | `-g` | **required** | Gist ID to download from |
+| `--token` | `-T` | — | GitHub PAT (recommended for private Gists) |
+| `--token-env` | | `GITHUB_TOKEN` | Token env var name |
+| `--cwd` | `-C` | `process.cwd()` | Project root for resolving `$PROJECT` paths |
+| `--output-root` | `-o` | — | Override restore destination (sandbox mode) |
+| `--force` | | `false` | Overwrite even if local file is newer |
+| `--strict-manifest` | | `false` | Require usync manifest; disable raw fallback |
 
 ## Behavior
 

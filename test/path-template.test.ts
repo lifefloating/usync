@@ -23,8 +23,8 @@ describe('path template', () => {
 })
 
 describe('templatePathToOutputPath', () => {
-  it('strips claudecode prefix and uses alias', () => {
-    expect(templatePathToOutputPath('$HOME/.claude/settings.json', 'claudecode'))
+  it('strips claude prefix and uses alias', () => {
+    expect(templatePathToOutputPath('$HOME/.claude/settings.json', 'claude'))
       .toBe('home/claude/settings.json')
   })
 
@@ -44,17 +44,17 @@ describe('templatePathToOutputPath', () => {
   })
 
   it('strips gemini prefix and uses alias', () => {
-    expect(templatePathToOutputPath('$HOME/.gemini/settings.json', 'gemini-cli'))
+    expect(templatePathToOutputPath('$HOME/.gemini/settings.json', 'gemini'))
       .toBe('home/gemini/settings.json')
   })
 
   it('handles project scope', () => {
-    expect(templatePathToOutputPath('$PROJECT/.claude/skills/foo.md', 'claudecode'))
+    expect(templatePathToOutputPath('$PROJECT/.claude/skills/foo.md', 'claude'))
       .toBe('project/claude/skills/foo.md')
   })
 
   it('keeps path when prefix does not match', () => {
-    expect(templatePathToOutputPath('$HOME/custom/path.json', 'claudecode'))
+    expect(templatePathToOutputPath('$HOME/custom/path.json', 'claude'))
       .toBe('home/claude/custom/path.json')
   })
 })

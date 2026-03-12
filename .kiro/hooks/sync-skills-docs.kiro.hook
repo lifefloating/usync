@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Sync Skills Docs",
+  "description": "When the agent finishes work, check if any source files (src/, README.md) were modified and update the corresponding skills documentation (skills/usync/) to stay in sync with the codebase.",
+  "version": "1",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Check if any files under `src/`, `README.md`, or `README.zh-CN.md` were modified in this session. If source code was changed, review the current skills documentation under `skills/usync/` and update it to reflect the changes. Specifically:\n\n1. If commands changed (src/commands/*), update the corresponding `skills/usync/references/command-*.md` files and the Commands table in `skills/usync/SKILL.md`.\n2. If providers changed (src/providers.ts), update `skills/usync/references/reference-providers.md` and the Supported Providers table in `skills/usync/SKILL.md`.\n3. If architecture/utils changed (src/utils/*), update `skills/usync/references/reference-architecture.md` if relevant.\n4. If new features were added, add them to the appropriate sections in SKILL.md and reference docs.\n5. If README.md was updated with new features/commands, ensure skills docs match.\n6. Update `skills/GENERATION.md` date if any skills files were changed.\n\nKeep the same markdown style and structure. Do NOT update skills docs if only tests or non-functional files changed."
+  }
+}

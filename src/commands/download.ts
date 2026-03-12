@@ -13,12 +13,12 @@ export default defineCommand({
     description: 'Download synced files from a GitHub Gist',
   },
   args: {
-    gistId: { type: 'string', required: true, description: 'Gist ID' },
-    token: { type: 'string', description: 'GitHub PAT' },
+    gistId: { type: 'string', alias: 'g', required: true, description: 'Gist ID' },
+    token: { type: 'string', alias: 'T', description: 'GitHub PAT' },
     tokenEnv: { type: 'string', default: 'GITHUB_TOKEN', description: 'Token env var name' },
-    cwd: { type: 'string', description: 'Project root directory' },
-    outputRoot: { type: 'string', description: 'Override restore destination (sandbox path)' },
-    force: { type: 'boolean', default: false, description: 'Overwrite even if content is identical' },
+    cwd: { type: 'string', alias: 'C', description: 'Project root directory' },
+    outputRoot: { type: 'string', alias: 'o', description: 'Override restore destination (sandbox path)' },
+    force: { type: 'boolean', default: false, description: 'Overwrite even if local is newer' },
     strictManifest: { type: 'boolean', default: false, description: 'Require usync manifest' },
   },
   async run({ args }) {

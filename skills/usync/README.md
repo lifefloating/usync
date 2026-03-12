@@ -15,9 +15,10 @@ This will add the usync skill to your Claude Code configuration.
 The usync skill provides Claude Code with knowledge about:
 
 - **Core Concepts** - What usync does, supported providers, sync workflow
-- **Commands** - init, scan, upload, download with all options
-- **Providers** - ClaudeCode, OpenCode, Codex, Gemini CLI config paths
+- **Commands** - init, scan, upload, download, migrate with all options
+- **Providers** - Claude, OpenCode, Codex, Gemini, Kiro, Qoder, Cursor config paths
 - **Architecture** - Template paths, manifest format, incremental sync
+- **Migration** - Cross-tool MCP config and skills migration with format conversion
 - **Cross-platform** - macOS and Windows path handling
 
 ## Usage
@@ -25,9 +26,10 @@ The usync skill provides Claude Code with knowledge about:
 Once installed, Claude Code will automatically use usync knowledge when:
 
 - Syncing AI CLI configurations to GitHub Gist
-- Setting up config backup for ClaudeCode, OpenCode, Codex, or Gemini CLI
+- Setting up config backup for Claude, OpenCode, Codex, Gemini, Kiro, Qoder, or Cursor
 - Working with multi-tool AI development environments
 - Managing skills and settings across machines
+- Migrating MCP configs and skills between AI coding tools
 
 ### Example Prompts
 

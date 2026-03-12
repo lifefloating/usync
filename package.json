@@ -1,17 +1,20 @@
 {
-  "name": "usync-cli",
+  "name": "usync",
   "type": "module",
   "version": "1.1.2",
   "packageManager": "pnpm@10.28.1",
-  "description": "Sync ClaudeCode/OpenCode/Codex/Gemini CLI settings and skills to GitHub Gist",
+  "description": "Sync and migrate Claude/OpenCode/Codex/Gemini/Kiro/Qoder settings and skills",
   "license": "MIT",
   "keywords": [
     "gist",
     "sync",
-    "claudecode",
+    "migrate",
+    "claude",
     "opencode",
     "codex",
-    "gemini-cli"
+    "gemini",
+    "kiro",
+    "qoder"
   ],
   "exports": {
     ".": {
@@ -47,13 +50,15 @@
     "citty": "^0.2.0",
     "colorette": "^2.0.20",
     "consola": "^3.4.2",
-    "pathe": "^2.0.3"
+    "pathe": "^2.0.3",
+    "smol-toml": "^1.6.0"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^7.3.0",
     "@changesets/cli": "^2.29.4",
     "@types/node": "^25.2.1",
     "eslint": "^9.39.2",
+    "fast-check": "^4.5.3",
     "tsdown": "^0.20.3",
     "typescript": "^5.9.2",
     "vitest": "^4.0.18"

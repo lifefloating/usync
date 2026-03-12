@@ -15,15 +15,15 @@ export default defineCommand({
     description: 'Upload discovered files to a GitHub Gist',
   },
   args: {
-    token: { type: 'string', description: 'GitHub PAT (scope: gist write)' },
+    token: { type: 'string', alias: 'T', description: 'GitHub PAT (scope: gist write)' },
     tokenEnv: { type: 'string', default: 'GITHUB_TOKEN', description: 'Token env var name' },
-    gistId: { type: 'string', description: 'Existing gist ID' },
-    description: { type: 'string', default: 'cloudSettings', description: 'Gist description' },
-    public: { type: 'boolean', default: false, description: 'Create public gist' },
+    gistId: { type: 'string', alias: 'g', description: 'Existing gist ID' },
+    description: { type: 'string', alias: 'd', default: 'cloudSettings', description: 'Gist description' },
+    public: { type: 'boolean', alias: 'p', default: false, description: 'Create public gist' },
     providers: { type: 'string', description: 'Filter providers (comma-separated)' },
-    cwd: { type: 'string', description: 'Project root directory' },
+    cwd: { type: 'string', alias: 'C', description: 'Project root directory' },
     watch: { type: 'boolean', default: false, description: 'Watch for changes' },
-    interval: { type: 'string', default: '15', description: 'Watch interval in seconds' },
+    interval: { type: 'string', alias: 'i', default: '15', description: 'Watch interval in seconds' },
   },
   async run({ args }) {
     p.intro(cyan('usync-cli upload'))
