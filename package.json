@@ -5,6 +5,14 @@
   "packageManager": "pnpm@10.28.1",
   "description": "Sync and migrate Claude/OpenCode/Codex/Gemini/Kiro/Qoder settings and skills",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lifefloating/usync.git"
+  },
+  "homepage": "https://github.com/lifefloating/usync#readme",
+  "bugs": {
+    "url": "https://github.com/lifefloating/usync/issues"
+  },
   "keywords": [
     "gist",
     "sync",
