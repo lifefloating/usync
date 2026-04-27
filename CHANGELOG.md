@@ -1,5 +1,11 @@
 # usync-cli
 
+## 1.2.2
+
+### Patch Changes
+
+- e1c1636: Make `README.md` default to the Chinese documentation.
+
 ## 1.2.1
 
 ### Patch Changes
