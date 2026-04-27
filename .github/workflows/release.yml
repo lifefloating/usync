@@ -12,6 +12,8 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      USYNC_GITHUB_CLIENT_ID: ${{ secrets.USYNC_GITHUB_CLIENT_ID }}
     steps:
       - uses: actions/checkout@v4
 

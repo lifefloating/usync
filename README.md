@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/logo.png" alt="usync logo" width="200" />
+</p>
+
 # usync
 
 Sync Claude / OpenCode / Codex / Gemini / Kiro / Qoder / Cursor settings + skills to GitHub Gist.
@@ -10,7 +14,7 @@ Sync Claude / OpenCode / Codex / Gemini / Kiro / Qoder / Cursor settings + skill
 - Incremental update: only changed files are uploaded.
 - Download and restore from Gist to real paths, or to a custom test directory.
 - Progress output and detailed changed/uploaded/downloaded file lists.
-- Built-in `init` command validates PAT and verifies/creates gist.
+- Built-in `init` command validates PAT or runs GitHub OAuth device-code login, then verifies/creates gist.
 - Excludes obvious sensitive files by default (`.env*`, `.pem`, `.key`, `.p12`) and system noise (`.DS_Store`).
 - Optional auto sync loop: `upload --watch` polls local changes and pushes incrementally.
 - Cross-tool migration with format conversion, conflict handling, and `mcp-remote` bridge detection.
@@ -33,10 +37,15 @@ npm install
 npm run build
 ```
 
-### Token setup
+### Token / OAuth setup
 
 - Create PAT: https://github.com/settings/tokens/new
 - Minimum scope: `gist`
+- Or use the GitHub OAuth device flow:
+  - `init --oauth` opens GitHub's device authorization page and shows a verification code.
+  - Official release builds inject `USYNC_GITHUB_CLIENT_ID` from CI/CD secrets at build time.
+  - Local/fork builds can set `USYNC_GITHUB_CLIENT_ID` in the environment or `.env`, or pass `--github-client-id <CLIENT_ID>`.
+  - `init --oauth` creates a private/secret gist and stores the OAuth token + Gist ID in the local usync auth store.
 
 ### Gist setup
 
@@ -52,13 +61,19 @@ npx usync-cli scan
 npx usync init --token <GITHUB_PAT> --gist-id <GIST_ID>
 npx usync init -T <GITHUB_PAT> -g <GIST_ID>
 
+# 1.2) OAuth login with a verification code, then auto-create/store a gist
+npx usync init --oauth
+
 # 2) Upload to existing gist
 npx usync upload --token <GITHUB_PAT> --gist-id <GIST_ID>
 npx usync upload -T <GITHUB_PAT> -g <GIST_ID>
 
-# 3) Create new gist and upload
+# 3) Create new gist and upload with PAT
 npx usync upload --token <GITHUB_PAT> --description cloudSettings --public
 npx usync upload -T <GITHUB_PAT> -d cloudSettings -p
+
+# 3.1) Upload using stored OAuth token/Gist ID from `init --oauth`
+npx usync upload
 
 # 4) Download and restore to real target paths
 npx usync download --token <GITHUB_PAT> --gist-id <GIST_ID>
@@ -74,7 +89,7 @@ npx usync upload -T <GITHUB_PAT> -g <GIST_ID> --watch -i 15
 ```
 
 `scan` does not require PAT or Gist ID.
-`upload/download/init` require PAT, and `upload/download` need a target Gist ID.
+`upload/download/init` can use PAT, or the stored OAuth token/Gist ID created by `init --oauth`.
 
 #### scan options
 
@@ -88,18 +103,22 @@ npx usync upload -T <GITHUB_PAT> -g <GIST_ID> --watch -i 15
 | Option | Alias | Description |
 |--------|-------|-------------|
 | `--token` | `-T` | GitHub PAT |
+| `--oauth` | | Authenticate with GitHub OAuth device code |
+| `--github-client-id` | | Override the GitHub OAuth App client ID from build/env/.env |
 | `--gist-id` | `-g` | Existing gist ID to verify access |
 | `--description` | `-d` | Description for new gist (default: `cloudSettings`) |
-| `--public` | `-p` | Create public gist |
+| `--public` | `-p` | Create public gist for PAT-based flows; OAuth-created gists stay private |
 
 #### upload options
 
 | Option | Alias | Description |
 |--------|-------|-------------|
 | `--token` | `-T` | GitHub PAT (scope: gist write) |
+| `--oauth` | | Authenticate with GitHub OAuth device code if no token is available |
+| `--github-client-id` | | Override the GitHub OAuth App client ID from build/env/.env |
 | `--gist-id` | `-g` | Existing gist ID |
 | `--description` | `-d` | Gist description |
-| `--public` | `-p` | Create public gist |
+| `--public` | `-p` | Create public gist for PAT-based flows; OAuth-created gists stay private |
 | `--cwd` | `-C` | Project root directory |
 | `--interval` | `-i` | Watch interval in seconds (default: 15) |
 
@@ -107,7 +126,7 @@ npx usync upload -T <GITHUB_PAT> -g <GIST_ID> --watch -i 15
 
 | Option | Alias | Description |
 |--------|-------|-------------|
-| `--gist-id` | `-g` | Gist ID (required) |
+| `--gist-id` | `-g` | Gist ID (optional when stored by `init --oauth`) |
 | `--token` | `-T` | GitHub PAT |
 | `--cwd` | `-C` | Project root directory |
 | `--output-root` | `-o` | Override restore destination (sandbox path) |
@@ -175,6 +194,7 @@ When `--output-root` is used, files are written in a visible mapping layout (no 
 ### PAT scope
 
 - Use a token with Gist write permission (`gist`) for upload.
+- OAuth device flow requests `gist read:user`; when OAuth creates a gist, usync sends `public: false`.
 - Download can work without token for accessible gists, but token is recommended for private/secret access control.
 
 ---

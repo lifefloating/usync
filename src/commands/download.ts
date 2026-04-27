@@ -4,6 +4,7 @@ import { defineCommand } from 'citty'
 import { cyan, gray, green } from 'colorette'
 import { consola } from 'consola'
 import { resolve } from 'pathe'
+import { readUsyncAuth } from '../utils/auth-store.js'
 import { GistClient } from '../utils/gist.js'
 import { downloadFromGist } from '../utils/sync.js'
 import { resolveToken } from '../utils/token.js'
@@ -13,7 +14,7 @@ export default defineCommand({
     description: 'Download synced files from a GitHub Gist',
   },
   args: {
-    gistId: { type: 'string', alias: 'g', required: true, description: 'Gist ID' },
+    gistId: { type: 'string', alias: 'g', description: 'Gist ID' },
     token: { type: 'string', alias: 'T', description: 'GitHub PAT' },
     tokenEnv: { type: 'string', default: 'GITHUB_TOKEN', description: 'Token env var name' },
     cwd: { type: 'string', alias: 'C', description: 'Project root directory' },
@@ -25,16 +26,27 @@ export default defineCommand({
     p.intro(cyan('usync-cli download'))
 
     const projectRoot = resolve(args.cwd ?? process.cwd())
+    const storedAuth = await readUsyncAuth()
     const resolved = resolveToken(args)
+    const gistId = args.gistId ?? storedAuth?.gistId
+
+    if (!gistId) {
+      consola.error('Gist ID not found. Pass --gist-id <id> or run `usync-cli init --oauth` first.')
+      process.exitCode = 1
+      return
+    }
 
     if (resolved.token) {
       consola.info(`Using GitHub token from ${resolved.source}`)
+    }
+    else if (storedAuth?.token) {
+      consola.info('Using token from usync auth store')
     }
     else {
       consola.warn('No token found, trying anonymous gist access.')
     }
 
-    const gistClient = new GistClient(resolved.token)
+    const gistClient = new GistClient(resolved.token ?? storedAuth?.token)
     const s = p.spinner()
 
     s.start('Downloading from gist...')
@@ -43,7 +55,7 @@ export default defineCommand({
     try {
       result = await downloadFromGist({
         gistClient,
-        gistId: args.gistId,
+        gistId,
         projectRoot,
         outputRoot: args.outputRoot,
         force: args.force,

@@ -1,3 +1,4 @@
+import type { GistAuthSource } from '../utils/gist-visibility.js'
 import process from 'node:process'
 import * as p from '@clack/prompts'
 import { defineCommand } from 'citty'
@@ -5,10 +6,13 @@ import { cyan, gray, green, red } from 'colorette'
 import { consola } from 'consola'
 import { resolve } from 'pathe'
 import { resolveProviders } from '../providers.js'
+import { readUsyncAuth, writeUsyncAuth } from '../utils/auth-store.js'
 import { discoverSyncItems } from '../utils/discovery.js'
+import { resolveCreateGistVisibility } from '../utils/gist-visibility.js'
 import { GistClient } from '../utils/gist.js'
+import { authenticateWithGitHubDeviceFlow } from '../utils/github-oauth.js'
 import { uploadToGist } from '../utils/sync.js'
-import { ensureToken } from '../utils/token.js'
+import { resolveToken } from '../utils/token.js'
 
 export default defineCommand({
   meta: {
@@ -17,6 +21,8 @@ export default defineCommand({
   args: {
     token: { type: 'string', alias: 'T', description: 'GitHub PAT (scope: gist write)' },
     tokenEnv: { type: 'string', default: 'GITHUB_TOKEN', description: 'Token env var name' },
+    oauth: { type: 'boolean', default: false, description: 'Authenticate with GitHub OAuth device code' },
+    githubClientId: { type: 'string', description: 'Override the GitHub OAuth App client ID from build/env/.env' },
     gistId: { type: 'string', alias: 'g', description: 'Existing gist ID' },
     description: { type: 'string', alias: 'd', default: 'cloudSettings', description: 'Gist description' },
     public: { type: 'boolean', alias: 'p', default: false, description: 'Create public gist' },
@@ -28,9 +34,38 @@ export default defineCommand({
   async run({ args }) {
     p.intro(cyan('usync-cli upload'))
 
-    let token: string
+    const storedAuth = await readUsyncAuth()
+    const resolved = resolveToken(args)
+    let token = resolved.token
+    let shouldPersistAuth = false
+    let authSource: GistAuthSource = 'pat'
+
     try {
-      token = ensureToken(args)
+      if (!token && args.oauth) {
+        consola.info('Starting GitHub OAuth device flow...')
+        const oauthToken = await authenticateWithGitHubDeviceFlow({
+          clientId: args.githubClientId,
+          onVerification: (verification) => {
+            consola.info(`Open ${verification.verificationUri} and enter code: ${cyan(verification.userCode)}`)
+          },
+        })
+        token = oauthToken.accessToken
+        shouldPersistAuth = true
+        authSource = 'oauth'
+      }
+      else if (!token && storedAuth?.token) {
+        token = storedAuth.token
+        shouldPersistAuth = true
+        authSource = 'stored'
+        consola.info('Using token from usync auth store')
+      }
+      else if (token) {
+        authSource = 'pat'
+        consola.info(`Using GitHub token from ${resolved.source}`)
+      }
+      else {
+        throw new Error('GitHub token not found. Pass --token <PAT>, set GITHUB_TOKEN/GH_TOKEN, or run `usync-cli init --oauth`.')
+      }
     }
     catch (error) {
       consola.error(error instanceof Error ? error.message : String(error))
@@ -41,6 +76,7 @@ export default defineCommand({
     const projectRoot = resolve(args.cwd ?? process.cwd())
     const providers = resolveProviders(args.providers)
     const gistClient = new GistClient(token)
+    let targetGistId = args.gistId ?? storedAuth?.gistId
 
     const s = p.spinner()
     s.start('Authenticating...')
@@ -69,9 +105,12 @@ export default defineCommand({
       try {
         result = await uploadToGist({
           gistClient,
-          gistId: args.gistId,
+          gistId: targetGistId,
           description: args.description,
-          isPublic: args.public,
+          isPublic: resolveCreateGistVisibility({
+            authSource,
+            requestedPublic: args.public,
+          }),
           localItems: items,
           onProgress: msg => s.message(msg),
         })
@@ -83,6 +122,11 @@ export default defineCommand({
         return
       }
       s.stop(`Gist ${result.created ? 'created' : 'updated'}: ${cyan(result.gistId)}`)
+      targetGistId = result.gistId
+      if (shouldPersistAuth) {
+        await writeUsyncAuth({ token, gistId: result.gistId, login: user.login })
+        consola.info('Saved OAuth token and Gist ID to the usync auth store.')
+      }
 
       if (result.plan.changed.length > 0) {
         consola.log(`  ${green(`Uploaded: ${result.plan.changed.length}`)}`)

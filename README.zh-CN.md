@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/logo.png" alt="usync logo" width="200" />
+</p>
+
 # usync（中文）
 
 同步 Claude / OpenCode / Codex / Gemini / Kiro / Qoder / Cursor 的配置与 skills 到 GitHub Gist。
@@ -8,7 +12,7 @@
 - 增量上传：只上传变化文件，不全量覆盖。
 - 支持下载恢复到真实路径，或下载到指定测试目录。
 - CLI 显示进度、上传列表、下载列表、跳过列表。
-- 内置 `init`：验证 PAT 并校验/创建 Gist。
+- 内置 `init`：验证 PAT，或通过 GitHub OAuth 设备验证码登录并校验/创建 Gist。
 - 默认过滤明显敏感文件（`.env*`、`.pem`、`.key`、`.p12`）和系统噪音（`.DS_Store`）。
 - 支持可选自动同步：`upload --watch` 轮询本地变化并增量上传。
 - 跨工具迁移：自动格式转换、冲突处理、`mcp-remote` 桥接检测。
@@ -30,10 +34,15 @@ npm install
 npm run build
 ```
 
-## Token / Gist 准备
+## Token / OAuth / Gist 准备
 
 - 创建 PAT：https://github.com/settings/tokens/new
 - 最低权限：`gist`
+- 也可以使用 GitHub OAuth 设备验证码流程：
+  - `init --oauth` 会打开 GitHub 设备授权页面并显示验证码。
+  - 官方 release 构建会在 CI/CD 中从 secrets 注入 `USYNC_GITHUB_CLIENT_ID`。
+  - 本地/fork 构建可通过环境变量或 `.env` 设置 `USYNC_GITHUB_CLIENT_ID`，也可以传 `--github-client-id <CLIENT_ID>`。
+  - `init --oauth` 会创建私有/secret gist，并把 OAuth token 与 Gist ID 保存到本机 usync auth store。
 - 创建/查看 Gist：https://gist.github.com/
 
 ## 命令示例
@@ -46,13 +55,19 @@ npx usync-cli scan
 npx usync init --token <GITHUB_PAT> --gist-id <GIST_ID>
 npx usync init -T <GITHUB_PAT> -g <GIST_ID>
 
+# 1.2) OAuth 验证码登录，并自动创建/保存 gist
+npx usync init --oauth
+
 # 2) 上传到已有 gist
 npx usync upload --token <GITHUB_PAT> --gist-id <GIST_ID>
 npx usync upload -T <GITHUB_PAT> -g <GIST_ID>
 
-# 3) 创建新 gist 后上传
+# 3) 使用 PAT 创建新 gist 后上传
 npx usync upload --token <GITHUB_PAT> --description cloudSettings --public
 npx usync upload -T <GITHUB_PAT> -d cloudSettings -p
+
+# 3.1) 使用 `init --oauth` 保存的 OAuth token / Gist ID 上传
+npx usync upload
 
 # 4) 下载并恢复到默认路径
 npx usync download --token <GITHUB_PAT> --gist-id <GIST_ID>
@@ -68,7 +83,7 @@ npx usync upload -T <GITHUB_PAT> -g <GIST_ID> --watch -i 15
 ```
 
 `scan` 不需要 PAT 和 Gist ID。
-`upload/download/init` 需要 PAT，且 `upload/download` 还需要目标 Gist ID。
+`upload/download/init` 可使用 PAT，也可使用 `init --oauth` 保存的 OAuth token / Gist ID。
 
 #### scan 参数
 
@@ -82,18 +97,22 @@ npx usync upload -T <GITHUB_PAT> -g <GIST_ID> --watch -i 15
 | 参数 | 缩写 | 说明 |
 |------|------|------|
 | `--token` | `-T` | GitHub PAT |
+| `--oauth` | | 使用 GitHub OAuth 设备验证码认证 |
+| `--github-client-id` | | 覆盖 build/env/.env 中的 GitHub OAuth App client ID |
 | `--gist-id` | `-g` | 已有 Gist ID（验证访问权限） |
 | `--description` | `-d` | 新 Gist 描述（默认：`cloudSettings`） |
-| `--public` | `-p` | 创建公开 Gist |
+| `--public` | `-p` | PAT 流程可创建公开 Gist；OAuth 创建时始终保持私有 |
 
 #### upload 参数
 
 | 参数 | 缩写 | 说明 |
 |------|------|------|
 | `--token` | `-T` | GitHub PAT（需要 gist 写权限） |
+| `--oauth` | | 没有 token 时使用 GitHub OAuth 设备验证码认证 |
+| `--github-client-id` | | 覆盖 build/env/.env 中的 GitHub OAuth App client ID |
 | `--gist-id` | `-g` | 已有 Gist ID |
 | `--description` | `-d` | Gist 描述 |
-| `--public` | `-p` | 创建公开 Gist |
+| `--public` | `-p` | PAT 流程可创建公开 Gist；OAuth 创建时始终保持私有 |
 | `--cwd` | `-C` | 项目根目录 |
 | `--interval` | `-i` | 轮询间隔秒数（默认：15） |
 
@@ -101,7 +120,7 @@ npx usync upload -T <GITHUB_PAT> -g <GIST_ID> --watch -i 15
 
 | 参数 | 缩写 | 说明 |
 |------|------|------|
-| `--gist-id` | `-g` | Gist ID（必填） |
+| `--gist-id` | `-g` | Gist ID（若已由 `init --oauth` 保存则可省略） |
 | `--token` | `-T` | GitHub PAT |
 | `--cwd` | `-C` | 项目根目录 |
 | `--output-root` | `-o` | 自定义恢复目标路径 |
@@ -165,3 +184,9 @@ npx usync migrate -f claude -t kiro -s project
 - `.../home/opencode/...`
 - `.../home/gemini/...`
 - `.../home/codex/...`
+
+#### PAT / OAuth 权限
+
+- PAT 上传需要 Gist 写权限（`gist`）。
+- OAuth 设备验证码流程请求 `gist read:user`；OAuth 创建 gist 时 usync 会发送 `public: false`。
+- 可公开访问的 gist 可匿名下载；私有/secret gist 建议使用 token。
