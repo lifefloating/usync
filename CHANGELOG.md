@@ -1,5 +1,11 @@
 # usync-cli
 
+## 1.2.1
+
+### Patch Changes
+
+- 144d332: Add `repository`, `homepage`, and `bugs` fields to package.json so that npm OIDC provenance verification can match the GitHub source repo.
+
 ## 1.2.0
 
 ### Minor Changes
