@@ -12,6 +12,10 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
     env:
       USYNC_GITHUB_CLIENT_ID: ${{ secrets.USYNC_GITHUB_CLIENT_ID }}
     steps:
@@ -25,13 +29,10 @@ jobs:
         with:
           node-version: lts/*
           cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
 
-      - name: Setup npm auth
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-          echo "registry=https://registry.npmjs.org/" >> ~/.npmrc
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Upgrade npm for OIDC support
+        run: npm install -g npm@latest
 
       - name: Install dependencies
         run: pnpm install
@@ -48,4 +49,3 @@ jobs:
           title: 'chore: release'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
