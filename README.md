@@ -4,201 +4,189 @@
 
 # usync
 
-Sync Claude / OpenCode / Codex / Gemini / Kiro / Qoder / Cursor settings + skills to GitHub Gist.
+同步 Claude / OpenCode / Codex / Gemini / Kiro / Qoder / Cursor 的配置与 skills 到 GitHub Gist。
 
-## English
+## 功能
 
-### Features
+- 同步多工具配置到同一个 Gist。
+- 增量上传：只上传变化文件，不全量覆盖。
+- 支持下载恢复到真实路径，或下载到指定测试目录。
+- CLI 显示进度、上传列表、下载列表、跳过列表。
+- 内置 `init`：验证 PAT，或通过 GitHub OAuth 设备验证码登录并校验/创建 Gist。
+- 默认过滤明显敏感文件（`.env*`、`.pem`、`.key`、`.p12`）和系统噪音（`.DS_Store`）。
+- 支持可选自动同步：`upload --watch` 轮询本地变化并增量上传。
+- 跨工具迁移：自动格式转换、冲突处理、`mcp-remote` 桥接检测。
 
-- Upload local config and skills files to a single Gist.
-- Incremental update: only changed files are uploaded.
-- Download and restore from Gist to real paths, or to a custom test directory.
-- Progress output and detailed changed/uploaded/downloaded file lists.
-- Built-in `init` command validates PAT or runs GitHub OAuth device-code login, then verifies/creates gist.
-- Excludes obvious sensitive files by default (`.env*`, `.pem`, `.key`, `.p12`) and system noise (`.DS_Store`).
-- Optional auto sync loop: `upload --watch` polls local changes and pushes incrementally.
-- Cross-tool migration with format conversion, conflict handling, and `mcp-remote` bridge detection.
-- TypeScript implementation, runnable via `npx` or `bunx` after build/publish.
+## 自动发现路径
 
-### Supported sources (auto-discovery)
+- **Claude**：`~/.claude.json`（全局 MCP）、`~/.claude/settings.json`、`~/.claude/skills`，以及项目内 `.mcp.json`、`.claude/*`
+- **OpenCode**：`~/.config/opencode/opencode.json(.jsonc)`、`~/.config/opencode/skill`，以及项目内 `opencode.json(.jsonc)`、`.opencode/skill`
+- **Codex**：`~/.codex/config.toml`、`~/.codex/skills`，以及项目内 `.codex/*`
+- **Gemini**：`~/.gemini/settings.json`、`~/.gemini/extensions`、`~/.gemini/skills`，以及项目内 `.gemini/*`
+- **Kiro**：`~/.kiro/settings/mcp.json`、`~/.kiro/skills`，以及项目内 `.kiro/settings/mcp.json`、`.kiro/steering`
+- **Qoder**：`~/.qoder/mcp.json`、`~/.qoder/skills`，以及项目内 `.qoder/mcp.json`、`.qoder/skills`
+- **Cursor**：`~/.cursor/mcp.json`、`~/.cursor/rules`，以及项目内 `.cursor/mcp.json`、`.cursor/rules`
 
-- **Claude**: `~/.claude.json` (global MCP), `~/.claude/settings.json`, `~/.claude/skills`, plus project `.mcp.json` and `.claude/*`
-- **OpenCode**: `~/.config/opencode/opencode.json(.jsonc)`, `~/.config/opencode/skill`, plus project `opencode.json(.jsonc)` and `.opencode/skill`
-- **Codex**: `~/.codex/config.toml`, `~/.codex/skills`, plus project `.codex/*`
-- **Gemini**: `~/.gemini/settings.json`, `~/.gemini/extensions`, `~/.gemini/skills`, plus project `.gemini/*`
-- **Kiro**: `~/.kiro/settings/mcp.json`, `~/.kiro/skills`, plus project `.kiro/settings/mcp.json` and `.kiro/steering`
-- **Qoder**: `~/.qoder/mcp.json`, `~/.qoder/skills`, plus project `.qoder/mcp.json` and `.qoder/skills`
-- **Cursor**: `~/.cursor/mcp.json`, `~/.cursor/rules`, plus project `.cursor/mcp.json` and `.cursor/rules`
-
-### Install & build
+## 安装与构建
 
 ```bash
 npm install
 npm run build
 ```
 
-### Token / OAuth setup
+## Token / OAuth / Gist 准备
 
-- Create PAT: https://github.com/settings/tokens/new
-- Minimum scope: `gist`
-- Or use the GitHub OAuth device flow:
-  - `init --oauth` opens GitHub's device authorization page and shows a verification code.
-  - Official release builds inject `USYNC_GITHUB_CLIENT_ID` from CI/CD secrets at build time.
-  - Local/fork builds can set `USYNC_GITHUB_CLIENT_ID` in the environment or `.env`, or pass `--github-client-id <CLIENT_ID>`.
-  - `init --oauth` creates a private/secret gist and stores the OAuth token + Gist ID in the local usync auth store.
+- 创建 PAT：https://github.com/settings/tokens/new
+- 最低权限：`gist`
+- 也可以使用 GitHub OAuth 设备验证码流程：
+  - `init --oauth` 会打开 GitHub 设备授权页面并显示验证码。
+  - 官方 release 构建会在 CI/CD 中从 secrets 注入 `USYNC_GITHUB_CLIENT_ID`。
+  - 本地/fork 构建可通过环境变量或 `.env` 设置 `USYNC_GITHUB_CLIENT_ID`，也可以传 `--github-client-id <CLIENT_ID>`。
+  - `init --oauth` 会创建私有/secret gist，并把 OAuth token 与 Gist ID 保存到本机 usync auth store。
+- 创建/查看 Gist：https://gist.github.com/
 
-### Gist setup
-
-- Create/View gists: https://gist.github.com/
-
-### Commands
+## 命令示例
 
 ```bash
-# 1) Scan discovered files
+# 1) 扫描本地可同步文件
 npx usync-cli scan
 
-# 1.1) Validate token and gist access
+# 1.1) 验证 token 与 gist 访问
 npx usync init --token <GITHUB_PAT> --gist-id <GIST_ID>
 npx usync init -T <GITHUB_PAT> -g <GIST_ID>
 
-# 1.2) OAuth login with a verification code, then auto-create/store a gist
+# 1.2) OAuth 验证码登录，并自动创建/保存 gist
 npx usync init --oauth
 
-# 2) Upload to existing gist
+# 2) 上传到已有 gist
 npx usync upload --token <GITHUB_PAT> --gist-id <GIST_ID>
 npx usync upload -T <GITHUB_PAT> -g <GIST_ID>
 
-# 3) Create new gist and upload with PAT
+# 3) 使用 PAT 创建新 gist 后上传
 npx usync upload --token <GITHUB_PAT> --description cloudSettings --public
 npx usync upload -T <GITHUB_PAT> -d cloudSettings -p
 
-# 3.1) Upload using stored OAuth token/Gist ID from `init --oauth`
+# 3.1) 使用 `init --oauth` 保存的 OAuth token / Gist ID 上传
 npx usync upload
 
-# 4) Download and restore to real target paths
+# 4) 下载并恢复到默认路径
 npx usync download --token <GITHUB_PAT> --gist-id <GIST_ID>
 npx usync download -T <GITHUB_PAT> -g <GIST_ID>
 
-# 5) Download to sandbox test directory
+# 5) 下载到测试目录
 npx usync download --token <GITHUB_PAT> --gist-id <GIST_ID> --output-root /path/to/settingsTest
 npx usync download -T <GITHUB_PAT> -g <GIST_ID> -o /path/to/settingsTest
 
-# 6) Auto-upload when local files change
+# 6) 本地有变化时自动上传
 npx usync upload --token <GITHUB_PAT> --gist-id <GIST_ID> --watch --interval 15
 npx usync upload -T <GITHUB_PAT> -g <GIST_ID> --watch -i 15
 ```
 
-`scan` does not require PAT or Gist ID.
-`upload/download/init` can use PAT, or the stored OAuth token/Gist ID created by `init --oauth`.
+`scan` 不需要 PAT 和 Gist ID。
+`upload/download/init` 可使用 PAT，也可使用 `init --oauth` 保存的 OAuth token / Gist ID。
 
-#### scan options
+#### scan 参数
 
-| Option | Alias | Description |
-|--------|-------|-------------|
-| `--cwd` | `-C` | Project root directory |
-| `--providers` | | Comma-separated provider filter |
+| 参数 | 缩写 | 说明 |
+|------|------|------|
+| `--cwd` | `-C` | 项目根目录 |
+| `--providers` | | 逗号分隔的工具过滤 |
 
-#### init options
+#### init 参数
 
-| Option | Alias | Description |
-|--------|-------|-------------|
+| 参数 | 缩写 | 说明 |
+|------|------|------|
 | `--token` | `-T` | GitHub PAT |
-| `--oauth` | | Authenticate with GitHub OAuth device code |
-| `--github-client-id` | | Override the GitHub OAuth App client ID from build/env/.env |
-| `--gist-id` | `-g` | Existing gist ID to verify access |
-| `--description` | `-d` | Description for new gist (default: `cloudSettings`) |
-| `--public` | `-p` | Create public gist for PAT-based flows; OAuth-created gists stay private |
+| `--oauth` | | 使用 GitHub OAuth 设备验证码认证 |
+| `--github-client-id` | | 覆盖 build/env/.env 中的 GitHub OAuth App client ID |
+| `--gist-id` | `-g` | 已有 Gist ID（验证访问权限） |
+| `--description` | `-d` | 新 Gist 描述（默认：`cloudSettings`） |
+| `--public` | `-p` | PAT 流程可创建公开 Gist；OAuth 创建时始终保持私有 |
 
-#### upload options
+#### upload 参数
 
-| Option | Alias | Description |
-|--------|-------|-------------|
-| `--token` | `-T` | GitHub PAT (scope: gist write) |
-| `--oauth` | | Authenticate with GitHub OAuth device code if no token is available |
-| `--github-client-id` | | Override the GitHub OAuth App client ID from build/env/.env |
-| `--gist-id` | `-g` | Existing gist ID |
-| `--description` | `-d` | Gist description |
-| `--public` | `-p` | Create public gist for PAT-based flows; OAuth-created gists stay private |
-| `--cwd` | `-C` | Project root directory |
-| `--interval` | `-i` | Watch interval in seconds (default: 15) |
+| 参数 | 缩写 | 说明 |
+|------|------|------|
+| `--token` | `-T` | GitHub PAT（需要 gist 写权限） |
+| `--oauth` | | 没有 token 时使用 GitHub OAuth 设备验证码认证 |
+| `--github-client-id` | | 覆盖 build/env/.env 中的 GitHub OAuth App client ID |
+| `--gist-id` | `-g` | 已有 Gist ID |
+| `--description` | `-d` | Gist 描述 |
+| `--public` | `-p` | PAT 流程可创建公开 Gist；OAuth 创建时始终保持私有 |
+| `--cwd` | `-C` | 项目根目录 |
+| `--interval` | `-i` | 轮询间隔秒数（默认：15） |
 
-#### download options
+#### download 参数
 
-| Option | Alias | Description |
-|--------|-------|-------------|
-| `--gist-id` | `-g` | Gist ID (optional when stored by `init --oauth`) |
+| 参数 | 缩写 | 说明 |
+|------|------|------|
+| `--gist-id` | `-g` | Gist ID（若已由 `init --oauth` 保存则可省略） |
 | `--token` | `-T` | GitHub PAT |
-| `--cwd` | `-C` | Project root directory |
-| `--output-root` | `-o` | Override restore destination (sandbox path) |
+| `--cwd` | `-C` | 项目根目录 |
+| `--output-root` | `-o` | 自定义恢复目标路径 |
 
-### Migrate
+### 迁移（Migrate）
 
-Migrate MCP configs and skills between AI coding tools.
+在 AI 编码工具之间迁移 MCP 配置和 skills。
 
 ```bash
-# Migrate from Claude Code to Kiro (global scope, default)
+# 从 Claude Code 迁移到 Kiro（默认全局范围）
 npx usync migrate --from claude --to kiro
 npx usync migrate -f claude -t kiro
 
-# Migrate from Codex to Claude Code
+# 从 Codex 迁移到 Claude Code
 npx usync migrate --from codex --to claude
 npx usync migrate -f codex -t claude
 
-# Dry-run: preview changes without writing
+# 预览模式：只显示变更，不写入文件
 npx usync migrate --from kiro --to claude --dry-run
 npx usync migrate -f kiro -t claude -n
 
-# Skip confirmation prompts (conflicts are skipped by default)
+# 跳过确认提示（冲突默认跳过）
 npx usync migrate --from claude --to kiro --yes
 npx usync migrate -f claude -t kiro -y
 
-# Force overwrite existing files
+# 强制覆盖已有文件
 npx usync migrate --from codex --to kiro --yes --overwrite
 npx usync migrate -f codex -t kiro -y -w
 
-# Migrate project-level configs
+# 迁移项目级配置
 npx usync migrate --from claude --to kiro --scope project
 npx usync migrate -f claude -t kiro -s project
 ```
 
-Supported providers: `claude`, `opencode`, `codex`, `gemini`, `kiro`, `qoder`, `cursor`
+支持的工具：`claude`、`opencode`、`codex`、`gemini`、`kiro`、`qoder`、`cursor`
 
-Options:
-| Option | Alias | Description |
-|--------|-------|-------------|
-| `--from` | `-f` | Source provider |
-| `--to` | `-t` | Target provider |
-| `--scope` | `-s` | `global` (default) or `project` |
-| `--dry-run` | `-n` | Preview changes without writing files |
-| `--yes` | `-y` | Skip confirmation prompts (conflicts are skipped unless `--overwrite` is set) |
-| `--overwrite` | `-w` | Overwrite existing files at target (default: skip conflicts) |
-| `--cwd` | `-C` | Project root directory (for project scope) |
+参数：
+| 参数 | 缩写 | 说明 |
+|------|------|------|
+| `--from` | `-f` | 源工具 |
+| `--to` | `-t` | 目标工具 |
+| `--scope` | `-s` | `global`（默认）或 `project` |
+| `--dry-run` | `-n` | 预览变更，不写入文件 |
+| `--yes` | `-y` | 跳过确认提示（冲突默认跳过，除非同时指定 `--overwrite`） |
+| `--overwrite` | `-w` | 强制覆盖目标已有文件（默认跳过冲突） |
+| `--cwd` | `-C` | 项目根目录（用于 project 范围） |
 
-#### Migration features
+#### 迁移特性
 
-- **Format conversion**: MCP configs are automatically converted between provider formats (JSON `mcpServers`, OpenCode `mcp.<name>`, Codex TOML `[mcp_servers]`).
-- **URL transport**: Remote MCP servers (HTTP/SSE) are serialized with provider-specific fields — `type: "http"` for Claude Code, `httpUrl` for Gemini, `type: "sse"` for Cursor, `type: "remote"` for OpenCode.
-- **mcp-remote detection**: Stdio servers using `mcp-remote` as a bridge (e.g. `npx mcp-remote@latest https://...`) are automatically converted to native URL transport. `--header` arguments are extracted and written as `headers` in the target config.
-- **Skills conversion**: Structured skills (`SKILL.md` + `references/`) are converted to flat format for providers that use flat files (Cursor, Gemini, Kiro project steering), and vice versa.
-- **System skills filtering**: Provider-internal directories (e.g. Codex `.system/`) are excluded from migration.
-- **Conflict handling**: Existing files at the target are skipped by default. Use `--overwrite` to force overwrite, or run interactively to choose per file.
+- **格式自动转换**：MCP 配置在不同工具格式间自动转换（JSON `mcpServers`、OpenCode `mcp.<name>`、Codex TOML `[mcp_servers]`）。
+- **URL transport**：远程 MCP 服务器（HTTP/SSE）按目标工具格式序列化 — Claude Code 用 `type: "http"`，Gemini 用 `httpUrl`，Cursor 用 `type: "sse"`，OpenCode 用 `type: "remote"`。
+- **mcp-remote 检测**：使用 `mcp-remote` 做桥接的 stdio 服务器（如 `npx mcp-remote@latest https://...`）会自动转换为原生 URL transport。`--header` 参数会被提取并写入目标配置的 `headers` 字段。
+- **Skills 格式转换**：结构化 skills（`SKILL.md` + `references/`）会自动转换为扁平格式（适用于 Cursor、Gemini、Kiro 项目 steering），反之亦然。
+- **系统 skills 过滤**：工具内部目录（如 Codex `.system/`）在迁移时自动排除。
+- **冲突处理**：目标已有文件默认跳过。使用 `--overwrite` 强制覆盖，或交互模式下逐个选择。
 
-Note: If the target gist has no `usync` manifest yet, `download` falls back to raw gist file download under `<output-root>/raw-gist/`. Add `--strict-manifest` to disable fallback.
+说明：若目标 gist 还没有 `usync` 的 manifest，`download` 会回退到原始 gist 文件下载到 `<output-root>/raw-gist/`。可加 `--strict-manifest` 禁止回退。
 
-When `--output-root` is used, files are written in a visible mapping layout (no hidden leading-dot directories), for example:
+当使用 `--output-root` 时，会写成可见目录映射（不再使用点前缀隐藏目录），例如：
 - `.../home/claude/...`
 - `.../home/opencode/...`
 - `.../home/gemini/...`
 - `.../home/codex/...`
 
-### PAT scope
+#### PAT / OAuth 权限
 
-- Use a token with Gist write permission (`gist`) for upload.
-- OAuth device flow requests `gist read:user`; when OAuth creates a gist, usync sends `public: false`.
-- Download can work without token for accessible gists, but token is recommended for private/secret access control.
-
----
-
-## 中文文档
-
-请查看：`README.zh-CN.md`
+- PAT 上传需要 Gist 写权限（`gist`）。
+- OAuth 设备验证码流程请求 `gist read:user`；OAuth 创建 gist 时 usync 会发送 `public: false`。
+- 可公开访问的 gist 可匿名下载；私有/secret gist 建议使用 token。
